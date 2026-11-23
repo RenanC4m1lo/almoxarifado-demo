@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema Almoxarifado</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="login-container">
+    <div class="login-box">
+
+        <!-- Logo -->
+        <div style="text-align:center;margin-bottom:2rem;">
+            <div style="width:64px;height:64px;
+                background:rgba(79,142,247,0.15);
+                border:1px solid rgba(79,142,247,0.3);
+                border-radius:16px;display:flex;
+                align-items:center;justify-content:center;
+                font-size:2rem;margin:0 auto 1rem;">
+                📦
+            </div>
+            <h1>Almoxarifado</h1>
+            <p>Sistema de Controle de Estoque</p>
+        </div>
+
+        <!-- Mensagens -->
+        <div id="msgErro" class="alerta alerta-erro" style="display:none;"></div>
+
+        <!-- ============================================
+             TELA 1 - Formulário de login
+             ============================================ -->
+        <div id="telaLogin">
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="email"
+                    placeholder="seu@email.com"
+                    autocomplete="email">
+            </div>
+
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="senha"
+                    placeholder="••••••••"
+                    autocomplete="current-password">
+            </div>
+
+            <button class="btn btn-primary" onclick="fazerLogin()"
+                id="btnLogin" style="margin-top:0.5rem;">
+                Entrar no Sistema
+            </button>
+
+            <div style="margin-top:1.5rem;padding:0.75rem 1rem;
+                background:rgba(79,142,247,0.08);
+                border:1px solid rgba(79,142,247,0.15);
+                border-radius:8px;font-size:0.8rem;
+                color:#8892a4;text-align:center;">
+                💡 Acesso padrão:<br>
+                <strong style="color:#4f8ef7;">admin@almoxarifado.com</strong>
+                &nbsp;/&nbsp;
+                <strong style="color:#4f8ef7;">123456</strong>
+            </div>
+        </div>
+
+        <!-- ============================================
+             TELA 2 - Seleção de empresa (super admin)
+             ============================================ -->
+        <div id="telaEmpresa" style="display:none;">
+            <div style="text-align:center;margin-bottom:1.5rem;">
+                <p style="color:#e2e8f0;font-weight:600;font-size:1rem;">
+                    Selecione a empresa
+                </p>
+                <p style="color:#8892a4;font-size:0.85rem;">
+                    Qual empresa você deseja acessar agora?
+                </p>
+            </div>
+
+            <!-- Cards de empresa -->
+            <div style="display:flex;flex-direction:column;gap:0.75rem;
+                        margin-bottom:1.5rem;" id="listaEmpresas">
+            </div>
+
+            <button class="btn btn-secondary" onclick="voltarLogin()"
+                style="width:100%;justify-content:center;">
+                ← Voltar
+            </button>
+        </div>
+
+    </div>
+</div>
+<script src="js/config.js"></script>
+<script>
+    // Dados temporários do usuário (antes de selecionar a empresa)
+    let emailTemp = "";
+    let senhaTemp = "";
+
+    async function fazerLogin() {
+        const email    = document.getElementById("email").value;
+        const senha    = document.getElementById("senha").value;
+        const btnLogin = document.getElementById("btnLogin");
+        const msgErro  = document.getElementById("msgErro");
+
+        msgErro.style.display = "none";
+
+        if (!email || !senha) {
+            msgErro.textContent = "⚠️ Preencha o e-mail e a senha!";
+            msgErro.style.display = "flex";
+            return;
+        }
+
+        btnLogin.textContent = "Entrando...";
+        btnLogin.disabled    = true;
+
+        try {
+            const resposta = await fetch(`${API_URL}/api/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, senha })
+            });
+
+            const dados = await resposta.json();
+
+            if (resposta.ok) {
+                if (dados.selecionar_empresa) {
+                    // Super admin precisa selecionar a empresa
+                    emailTemp = email;
+                    senhaTemp = senha;
+                    await mostrarTelaEmpresa();
+                } else {
+                    // Login normal — salva e redireciona
+                    localStorage.setItem("token", dados.token);
+                    localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+                    window.location.href = "dashboard.html";
+                }
+            } else {
+                msgErro.textContent = "❌ " + dados.erro;
+                msgErro.style.display = "flex";
+            }
+
+        } catch (erro) {
+            msgErro.textContent = "❌ Não foi possível conectar ao servidor.";
+            msgErro.style.display = "flex";
+        }
+
+        btnLogin.textContent = "Entrar no Sistema";
+        btnLogin.disabled    = false;
+    }
+
+    // Carrega e mostra a tela de seleção de empresa
+    async function mostrarTelaEmpresa() {
+        try {
+            // Busca as empresas disponíveis
+            const r = await fetch(`${API_URL}/api/empresas/`, {
+                headers: { "Content-Type": "application/json" }
+            });
+
+            // Como ainda não tem token, buscamos via login temporário
+            // As empresas são fixas então podemos usar uma lista manual
+            const empresas = [
+                { id: 1, nome: "Matriz",  cidade: "Matriz", emoji: "🏢" },
+                { id: 2, nome: "Filial",     cidade: "Filial",    emoji: "🏭" }
+            ];
+
+            const lista = document.getElementById("listaEmpresas");
+            lista.innerHTML = empresas.map(e => `
+                <button onclick="selecionarEmpresa(${e.id})"
+                    style="width:100%;padding:1.25rem;
+                           background:rgba(79,142,247,0.08);
+                           border:1px solid rgba(79,142,247,0.2);
+                           border-radius:12px;cursor:pointer;
+                           transition:all 0.2s;text-align:left;
+                           display:flex;align-items:center;gap:1rem;">
+                    <div style="width:48px;height:48px;
+                        background:rgba(79,142,247,0.15);
+                        border-radius:10px;display:flex;
+                        align-items:center;justify-content:center;
+                        font-size:1.5rem;flex-shrink:0;">
+                        ${e.emoji}
+                    </div>
+                    <div>
+                        <p style="font-weight:600;color:#e2e8f0;
+                                  font-size:1rem;margin-bottom:0.2rem;">
+                            ${e.nome}
+                        </p>
+                        <p style="color:#8892a4;font-size:0.82rem;">
+                            ${e.cidade}
+                        </p>
+                    </div>
+                    <span style="margin-left:auto;color:#4f8ef7;">→</span>
+                </button>
+            `).join("");
+
+            // Mostra a tela de empresa e esconde o login
+            document.getElementById("telaLogin").style.display   = "none";
+            document.getElementById("telaEmpresa").style.display = "block";
+
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // Faz login com a empresa selecionada
+    async function selecionarEmpresa(id_empresa) {
+        const msgErro = document.getElementById("msgErro");
+
+        try {
+            const resposta = await fetch(`${API_URL}/api/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email:      emailTemp,
+                    senha:      senhaTemp,
+                    id_empresa: id_empresa
+                })
+            });
+
+            const dados = await resposta.json();
+
+            if (resposta.ok) {
+                localStorage.setItem("token", dados.token);
+                localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+                window.location.href = "dashboard.html";
+            } else {
+                msgErro.textContent = "❌ " + dados.erro;
+                msgErro.style.display = "flex";
+            }
+        } catch (e) {
+            msgErro.textContent = "❌ Erro ao selecionar empresa.";
+            msgErro.style.display = "flex";
+        }
+    }
+
+    function voltarLogin() {
+        document.getElementById("telaLogin").style.display   = "block";
+        document.getElementById("telaEmpresa").style.display = "none";
+        emailTemp = "";
+        senhaTemp = "";
+    }
+
+    // Enter para logar
+    document.addEventListener("keypress", e => {
+        if (e.key === "Enter") fazerLogin();
+    });
+
+    // Se já logado, vai para o dashboard
+    if (localStorage.getItem("token")) {
+        window.location.href = "dashboard.html";
+    }
+</script>
+
+</body>
+</html>

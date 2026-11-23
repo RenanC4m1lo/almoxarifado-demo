@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuários - Sistema Almoxarifado</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div style="width:36px;height:36px;background:rgba(79,142,247,0.2);
+                border-radius:8px;display:flex;align-items:center;
+                justify-content:center;font-size:1.2rem;">📦</div>
+            <div>
+                <h2>Almoxarifado</h2>
+                <p>Sistema de Estoque</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="dashboard.html"><span>📊</span> Dashboard</a>
+            <a href="equipamentos.html"><span>🔧</span> Cadastro de Equipamentos</a>
+            <a href="unidades.html"><span>📷</span> Unidades</a>
+            <a href="movimentacoes.html"><span>🔄</span> Movimentações</a>
+            <a href="fornecedores.html"><span>🏭</span> Fornecedores</a>
+            <a href="tecnicos.html" id="linkTecnicos"><span>👷</span> Técnicos</a>
+            <a href="relatorios.html"><span>📄</span> Relatórios</a>
+            <a href="usuarios.html" class="ativo"><span>👥</span> Usuários</a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="avatar" id="avatarLetra">A</div>
+            <div class="sidebar-user-info">
+                <p id="sidebarNome">Usuário</p>
+                <span id="sidebarPerfil">Administrador</span>
+            </div>
+        </div>
+
+        <div style="padding:0.75rem 1rem;padding-top:0;">
+            <button class="btn btn-danger" onclick="sair()"
+                style="width:100%;justify-content:center;">
+                🚪 Sair
+            </button>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO -->
+    <div class="main-content">
+
+        <div class="topbar">
+            <h1>Usuários</h1>
+           <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
+    <div id="seletorEmpresa" style="position:relative;">
+    <button id="btnEmpresa" onclick="toggleDropdownEmpresa()" style="
+        color:#8892a4;font-size:0.82rem;
+        padding:0.3rem 0.75rem;
+        background:rgba(79,142,247,0.08);
+        border:1px solid rgba(79,142,247,0.15);
+        border-radius:999px;white-space:nowrap;
+        cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+        <span id="nomeEmpresa"></span>
+        <span id="setaEmpresa" style="display:none;">▾</span>
+    </button>
+    <div id="dropdownEmpresa" style="display:none;position:absolute;top:110%;right:0;
+        background:#1a1f2e;border:1px solid rgba(79,142,247,0.2);
+        border-radius:8px;min-width:160px;z-index:50;overflow:hidden;">
+    </div>
+</div>
+    <div class="badge-online" style="white-space:nowrap;">Sistema Online</div>
+</div>
+        </div>
+
+        <div class="page-content">
+
+            <div id="msgSucesso" class="alerta alerta-sucesso" style="display:none;"></div>
+            <div id="msgErro"    class="alerta alerta-erro"    style="display:none;"></div>
+
+            <!-- Aviso para não admins -->
+            <div id="avisoPermissao" class="alerta alerta-aviso" style="display:none;">
+                ⚠️ Apenas administradores podem gerenciar usuários.
+            </div>
+
+            <div class="card" id="cardUsuarios">
+                <div class="card-header">
+                    <h2>Lista de Usuários</h2>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;">
+                        <input type="text" id="buscaUsuarios"
+                            placeholder="🔍 Buscar por nome ou email..."
+                            oninput="aplicarFiltroUsuarios()"
+                            style="padding:0.5rem 1rem;min-width:240px;
+                                   background:#1e2235;
+                                   border:1.5px solid #2a2d3e;
+                                   border-radius:8px;color:#e2e8f0;
+                                   font-family:inherit;font-size:0.875rem;">
+                        <button class="btn btn-primary" onclick="abrirModal()"
+                            id="btnNovo" style="white-space:nowrap;">
+                            ➕ Novo Usuário
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Email</th>
+                                <th id="thEmpresa" style="display:none;">Empresa</th>
+                                <th>Perfil</th>
+                                <th>Status</th>
+                                <th>Cadastrado em</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaUsuarios">
+                            <tr><td colspan="7"
+                                style="text-align:center;color:#8892a4;padding:2rem;">
+                                Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Novo Usuário</h3>
+            <button class="btn-fechar" onclick="fecharModal()">×</button>
+        </div>
+
+        <input type="hidden" id="usuarioId">
+
+        <div class="form-group">
+            <label>Nome Completo *</label>
+            <input type="text" id="nome" placeholder="Ex: João da Silva">
+        </div>
+
+        <div class="form-group">
+            <label>E-mail *</label>
+            <input type="email" id="email" placeholder="joao@empresa.com">
+        </div>
+
+        <div class="form-group">
+            <label id="labelSenha">Senha *</label>
+            <input type="password" id="senha" placeholder="Mínimo 6 caracteres">
+            <!-- Ao editar, esse aviso aparece -->
+            <small id="dicaSenha" style="color:#8892a4;display:none;">
+                💡 Deixe em branco para manter a senha atual
+            </small>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+                <label>Perfil de Acesso *</label>
+                <select id="perfil">
+                    <option value="visitante">👁️ Visitante</option>
+                    <option value="operador">⚙️ Operador</option>
+                    <option value="admin">👑 Administrador</option>
+                </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+    <div class="form-group">
+        <label>Empresa *</label>
+        <select id="empresa">
+            <option value="1">🏢 Matriz</option>
+            <option value="2">🏭 Filial</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Status</label>
+        <select id="ativo">
+            <option value="1">✅ Ativo</option>
+            <option value="0">⛔ Inativo</option>
+        </select>
+    </div>
+</div>
+
+<!-- Acesso às duas empresas (só para admin) -->
+<div class="form-group">
+    <label>Acesso a todas as empresas?</label>
+    <select id="acessoTodas">
+        <option value="0">Não — só a empresa selecionada</option>
+        <option value="1">Sim — vê Matriz e Filial</option>
+    </select>
+</div>
+
+        <!-- Explicação dos perfis -->
+        <div style="
+            background:rgba(79,142,247,0.08);
+            border:1px solid rgba(79,142,247,0.15);
+            border-radius:8px;
+            padding:0.875rem 1rem;
+            font-size:0.8rem;
+            color:#8892a4;
+            margin-bottom:1rem;">
+            <p style="margin-bottom:0.4rem;">
+                <strong style="color:#4f8ef7;">👑 Admin</strong>
+                — Acesso total: cadastrar, editar, deletar e relatórios
+            </p>
+            <p style="margin-bottom:0.4rem;">
+                <strong style="color:#4f8ef7;">⚙️ Operador</strong>
+                — Pode registrar saídas e devoluções
+            </p>
+            <p>
+                <strong style="color:#4f8ef7;">👁️ Visitante</strong>
+                — Só pode visualizar o sistema
+            </p>
+        </div>
+
+        <div style="display:flex;gap:1rem;justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="salvarUsuario()"
+                style="width:auto;">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+<script src="js/config.js"></script>
+<script>
+    const token   = localStorage.getItem("token");
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    if (!token) window.location.href = "login.html";
+
+    const nome = usuario.nome || "Usuário";
+    document.getElementById("sidebarNome").textContent = nome;
+    document.getElementById("avatarLetra").textContent = nome.charAt(0).toUpperCase();
+    const perfis = { admin:"Administrador", operador:"Operador", visitante:"Visitante" };
+    document.getElementById("sidebarPerfil").textContent = perfis[usuario.perfil] || usuario.perfil;
+    if (usuario.perfil !== "admin") {
+        const linkTecnicos = document.getElementById("linkTecnicos");
+        if (linkTecnicos) linkTecnicos.style.display = "none";
+    }
+    // Mostra o nome da empresa no topbar
+document.getElementById("nomeEmpresa").textContent =
+    "🏢 " + (usuario.empresa_nome || "");
+    // ============================================================
+    // Troca de empresa (só Super Admin)
+    // ============================================================
+    const empresasDisponiveis = [
+        { id: 1, nome: "Matriz" },
+        { id: 2, nome: "Filial" }
+    ];
+
+    if (usuario.acesso_todas) {
+        document.getElementById("setaEmpresa").style.display = "inline";
+        montarDropdownEmpresa();
+    } else {
+        document.getElementById("btnEmpresa").style.cursor = "default";
+    }
+
+    function montarDropdownEmpresa() {
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.innerHTML = empresasDisponiveis.map(e => `
+            <div onclick="trocarEmpresa(${e.id})" style="
+                padding:0.6rem 1rem;cursor:pointer;font-size:0.85rem;
+                color:#e2e8f0;"
+                onmouseover="this.style.background='rgba(79,142,247,0.1)'"
+                onmouseout="this.style.background='transparent'">
+                ${e.nome}
+            </div>
+        `).join("");
+    }
+
+    function toggleDropdownEmpresa() {
+        if (!usuario.acesso_todas) return;
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    }
+
+    async function trocarEmpresa(idEmpresa) {
+        if (idEmpresa === usuario.id_empresa) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+            return;
+        }
+        try {
+            const resposta = await fetch(`${API_URL}/api/auth/trocar-empresa`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ id_empresa: idEmpresa })
+            });
+            const dados = await resposta.json();
+            if (resposta.ok) {
+                localStorage.setItem("token", dados.token);
+                localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+                window.location.reload();
+            } else {
+                alert("Erro ao trocar de empresa: " + dados.erro);
+            }
+        } catch (e) {
+            alert("Erro ao conectar com o servidor.");
+        }
+    }
+
+    // Fecha o dropdown se clicar fora dele
+    document.addEventListener("click", (e) => {
+        const seletor = document.getElementById("seletorEmpresa");
+        if (seletor && !seletor.contains(e.target)) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+        }
+    });
+
+    // Se não for admin, mostra aviso e esconde a tabela
+    if (usuario.perfil !== "admin") {
+        document.getElementById("avisoPermissao").style.display = "flex";
+        document.getElementById("cardUsuarios").style.display = "none";
+    }
+
+    let todosUsuarios = [];
+
+    // ============================================================
+    // Carrega a lista de usuários
+    // ============================================================
+    async function carregarUsuarios() {
+        if (usuario.perfil !== "admin") return;
+
+        try {
+            const r = await fetch(`${API_URL}/api/usuarios/`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            todosUsuarios = await r.json();
+
+            if (usuario.acesso_todas) {
+                document.getElementById("thEmpresa").style.display = "";
+            }
+
+            aplicarFiltroUsuarios();
+        } catch (e) { console.error(e); }
+    }
+
+    function aplicarFiltroUsuarios() {
+        const busca = document.getElementById("buscaUsuarios").value.trim().toLowerCase();
+
+        let resultado = todosUsuarios;
+        if (busca) {
+            resultado = resultado.filter(u =>
+                (u.nome || "").toLowerCase().includes(busca) ||
+                (u.email || "").toLowerCase().includes(busca));
+        }
+
+        renderizarUsuarios(resultado);
+    }
+
+    function renderizarUsuarios(lista) {
+        const tbody = document.getElementById("tabelaUsuarios");
+
+        if (lista.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7"
+                style="text-align:center;color:#8892a4;padding:2rem;">
+                Nenhum usuário encontrado</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = lista.map(u => `
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:0.75rem;">
+                            <!-- Avatar com a inicial do nome -->
+                            <div style="
+                                width:32px;height:32px;
+                                background:rgba(79,142,247,0.2);
+                                border-radius:50%;
+                                display:flex;align-items:center;
+                                justify-content:center;
+                                font-weight:700;font-size:0.85rem;
+                                color:#4f8ef7;flex-shrink:0;">
+                                ${u.nome.charAt(0).toUpperCase()}
+                            </div>
+                            <strong>${u.nome}</strong>
+                        </div>
+                    </td>
+                    <td style="color:#8892a4;">${u.email}</td>
+                    ${usuario.acesso_todas ? `<td style="color:#8892a4;">${u.empresa_nome || "-"}</td>` : ""}
+                    <td>${badgePerfil(u.perfil)}</td>
+                    <td>
+                        <span class="badge ${u.ativo ? 'badge-verde' : 'badge-cinza'}">
+                            ${u.ativo ? '✅ Ativo' : '⛔ Inativo'}
+                        </span>
+                    </td>
+                    <td style="color:#8892a4;">
+                        ${new Date(u.criado_em).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td>
+                        <!-- Não pode editar/deletar o próprio usuário logado -->
+                        ${u.id !== usuario.id ? `
+                            <div style="display:flex;gap:0.3rem;">
+                                <button class="btn btn-warning"
+                                    onclick="editarUsuario(${u.id})"
+                                    style="padding:0.3rem 0.6rem;font-size:0.8rem;">✏️</button>
+                                <button class="btn btn-danger"
+                                    onclick="deletarUsuario(${u.id},'${u.nome}')"
+                                    style="padding:0.3rem 0.6rem;font-size:0.8rem;">🗑️</button>
+                            </div>
+                        ` : '<span style="color:#8892a4;font-size:0.8rem;">Você</span>'}
+                    </td>
+                </tr>
+            `).join("");
+    }
+
+    // Badge colorido por perfil
+    function badgePerfil(perfil) {
+        const b = {
+            "admin":     '<span class="badge badge-azul">👑 Admin</span>',
+            "operador":  '<span class="badge badge-amarelo">⚙️ Operador</span>',
+            "visitante": '<span class="badge badge-cinza">👁️ Visitante</span>'
+        };
+        return b[perfil] || perfil;
+    }
+
+    // ============================================================
+    // Modal de cadastro/edição
+    // ============================================================
+   function abrirModal(id = null) {
+    document.getElementById("usuarioId").value = "";
+    document.getElementById("nome").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("senha").value = "";
+    document.getElementById("perfil").value = "visitante";
+    document.getElementById("ativo").value = "1";
+    document.getElementById("empresa").value = "1";
+    document.getElementById("acessoTodas").value = "0";
+    document.getElementById("dicaSenha").style.display = "none";
+    document.getElementById("labelSenha").textContent = "Senha *";
+    document.getElementById("modalTitulo").textContent =
+        id ? "Editar Usuário" : "Novo Usuário";
+
+    if (id) {
+        const u = todosUsuarios.find(u => u.id === id);
+        if (u) {
+            document.getElementById("usuarioId").value = u.id;
+            document.getElementById("nome").value = u.nome;
+            document.getElementById("email").value = u.email;
+            document.getElementById("perfil").value = u.perfil;
+            document.getElementById("ativo").value = u.ativo ? "1" : "0";
+            document.getElementById("empresa").value = u.id_empresa || "1";
+            document.getElementById("acessoTodas").value = u.acesso_todas || "0";
+            document.getElementById("labelSenha").textContent = "Nova Senha";
+            document.getElementById("dicaSenha").style.display = "block";
+        }
+    }
+
+    document.getElementById("modalOverlay").classList.add("ativo");
+}
+
+    function fecharModal() {
+        document.getElementById("modalOverlay").classList.remove("ativo");
+    }
+
+    // ============================================================
+    // Salva usuário (novo ou editado)
+    // ============================================================
+    async function salvarUsuario() {
+        const id    = document.getElementById("usuarioId").value;
+        const senha = document.getElementById("senha").value;
+
+        // Valida campos obrigatórios
+        if (!document.getElementById("nome").value ||
+            !document.getElementById("email").value) {
+            mostrarErro("Nome e e-mail são obrigatórios!");
+            return;
+        }
+
+        // Ao criar novo usuário, senha é obrigatória
+        if (!id && !senha) {
+            mostrarErro("Senha é obrigatória para novo usuário!");
+            return;
+        }
+
+const dados = {
+    nome:         document.getElementById("nome").value,
+    email:        document.getElementById("email").value,
+    perfil:       document.getElementById("perfil").value,
+    ativo:        parseInt(document.getElementById("ativo").value),
+    id_empresa:   parseInt(document.getElementById("empresa").value),
+    acesso_todas: parseInt(document.getElementById("acessoTodas").value)
+};
+
+        // Só inclui a senha se foi preenchida
+        if (senha) dados.senha = senha;
+
+        // Se novo usuário, usa a rota de registrar
+        // Se edição, usa a rota de atualizar
+        const url    = id
+            ? `${API_URL}/api/usuarios/${id}`
+: `${API_URL}/api/auth/registrar`;
+        const metodo = id ? "PUT" : "POST";
+
+        try {
+            const r = await fetch(url, {
+                method: metodo,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(dados)
+            });
+            const resultado = await r.json();
+
+            if (r.ok) {
+                mostrarSucesso(resultado.mensagem);
+                fecharModal();
+                carregarUsuarios();
+            } else {
+                mostrarErro(resultado.erro);
+            }
+        } catch (e) { mostrarErro("Erro ao salvar usuário"); }
+    }
+
+    function editarUsuario(id) { abrirModal(id); }
+
+    async function deletarUsuario(id, nome) {
+        if (!confirm(`Deseja realmente remover "${nome}"?`)) return;
+
+        try {
+            const r = await fetch(`${API_URL}/api/usuarios/${id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const resultado = await r.json();
+            if (r.ok) { mostrarSucesso(resultado.mensagem); carregarUsuarios(); }
+            else mostrarErro(resultado.erro);
+        } catch (e) { mostrarErro("Erro ao deletar usuário"); }
+    }
+
+    function mostrarSucesso(msg) {
+        const el = document.getElementById("msgSucesso");
+        el.textContent = "✅ " + msg;
+        el.style.display = "flex";
+        setTimeout(() => el.style.display = "none", 3000);
+    }
+
+    function mostrarErro(msg) {
+        const el = document.getElementById("msgErro");
+        el.textContent = "❌ " + msg;
+        el.style.display = "flex";
+        setTimeout(() => el.style.display = "none", 4000);
+    }
+
+    function sair() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        window.location.href = "login.html";
+    }
+
+    carregarUsuarios();
+</script>
+
+</body>
+</html>

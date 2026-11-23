@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema Almoxarifado</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="layout">
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div style="width:36px;height:36px;background:rgba(79,142,247,0.2);
+                border-radius:8px;display:flex;align-items:center;
+                justify-content:center;font-size:1.2rem;">📦</div>
+            <div>
+                <h2>Almoxarifado</h2>
+                <p>Sistema de Estoque</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="dashboard.html" class="ativo"><span>📊</span> Dashboard</a>
+            <a href="equipamentos.html"><span>🔧</span> Cadastro de Equipamentos</a>
+            <a href="unidades.html"><span>📷</span> Unidades</a>
+            <a href="movimentacoes.html"><span>🔄</span> Movimentações</a>
+            <a href="fornecedores.html"><span>🏭</span> Fornecedores</a>
+            <a href="tecnicos.html" id="linkTecnicos"><span>👷</span> Técnicos</a>
+            <a href="relatorios.html"><span>📄</span> Relatórios</a>
+            <a href="usuarios.html"><span>👥</span> Usuários</a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="avatar" id="avatarLetra">A</div>
+            <div class="sidebar-user-info">
+                <p id="sidebarNome">Usuário</p>
+                <span id="sidebarPerfil">Administrador</span>
+            </div>
+        </div>
+
+        <div style="padding:0.75rem 1rem;padding-top:0;">
+            <button class="btn btn-danger" onclick="sair()"
+                style="width:100%;justify-content:center;">
+                🚪 Sair
+            </button>
+        </div>
+    </aside>
+
+    <div class="main-content">
+
+        <div class="topbar">
+            <h1>Dashboard</h1>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;">
+                <div id="seletorEmpresa" style="position:relative;">
+    <button id="btnEmpresa" onclick="toggleDropdownEmpresa()" style="
+        color:#8892a4;font-size:0.82rem;
+        padding:0.3rem 0.75rem;
+        background:rgba(79,142,247,0.08);
+        border:1px solid rgba(79,142,247,0.15);
+        border-radius:999px;white-space:nowrap;
+        cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+        <span id="nomeEmpresa"></span>
+        <span id="setaEmpresa" style="display:none;">▾</span>
+    </button>
+    <div id="dropdownEmpresa" style="display:none;position:absolute;top:110%;right:0;
+        background:#1a1f2e;border:1px solid rgba(79,142,247,0.2);
+        border-radius:8px;min-width:160px;z-index:50;overflow:hidden;">
+    </div>
+</div>
+                <button class="btn btn-primary" id="btnExportarDashboard"
+                    onclick="exportarDashboardPDF()" style="width:auto;white-space:nowrap;">
+                    📄 Exportar PDF
+                </button>
+                <div class="badge-online" style="white-space:nowrap;">
+                    Sistema Online
+                </div>
+            </div>
+        </div>
+
+        <div class="page-content">
+
+            <!-- Cards de estatísticas -->
+            <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr));">
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(79,142,247,0.15);">👥</div>
+                    <div class="stat-info">
+                        <h3 id="totalEquipamentos">0</h3>
+                        <p>Total de Equipamentos</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(34,197,94,0.15);">✅</div>
+                    <div class="stat-info">
+                        <h3 id="totalDisponiveis">0</h3>
+                        <p>Disponíveis</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(249,115,22,0.15);">🚶</div>
+                    <div class="stat-info">
+                        <h3 id="totalEmUso">0</h3>
+                        <p>Em Uso</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(239,68,68,0.15);">🔧</div>
+                    <div class="stat-info">
+                        <h3 id="totalManutencao">0</h3>
+                        <p>Em Manutenção</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:rgba(100,116,139,0.15);">❌</div>
+                    <div class="stat-info">
+                        <h3 id="totalPerdidos">0</h3>
+                        <p>Perdidos</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Gráficos -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));
+                        gap:1.5rem;margin-bottom:1.5rem;">
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📊 Status dos Equipamentos</h2>
+                        <select id="filtroEquipamentoStatus" onchange="atualizarGraficoStatus()" style="
+                            padding:0.4rem 0.6rem;border-radius:8px;
+                            background:rgba(255,255,255,0.05);
+                            border:1px solid rgba(255,255,255,0.1);
+                            color:#e2e8f0;font-size:0.78rem;max-width:180px;">
+                            <option value="" style="background:#1a1f2e;color:#e2e8f0;">Todos os equipamentos</option>
+                        </select>
+                    </div>
+                    <div style="position:relative;height:250px;
+                                display:flex;align-items:center;justify-content:center;">
+                        <canvas id="graficoStatus"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📈 Movimentações (7 dias)</h2>
+                    </div>
+                    <div style="position:relative;height:250px;">
+                        <canvas id="graficoMovimentacoes"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Categorias por status + Resumo do mês (como coluna extra no mesmo gráfico) -->
+            <div class="card" style="margin-bottom:1.5rem;">
+                <div class="card-header">
+                    <h2>📦 Equipamentos por Categoria</h2>
+                    <div style="display:flex;gap:0.5rem;">
+                        <select id="filtroCategoriaEquip" onchange="montarGraficoCategoriasStatus()" style="
+                            padding:0.4rem 0.6rem;border-radius:8px;
+                            background:rgba(255,255,255,0.05);
+                            border:1px solid rgba(255,255,255,0.1);
+                            color:#e2e8f0;font-size:0.78rem;max-width:220px;">
+                            <option value="" style="background:#1a1f2e;color:#e2e8f0;">📦 Todas as categorias (resumo)</option>
+                        </select>
+                        <select id="mesResumo" onchange="montarGraficoCategoriasStatus()" style="
+                            padding:0.4rem 0.6rem;border-radius:8px;
+                            background:rgba(255,255,255,0.05);
+                            border:1px solid rgba(255,255,255,0.1);
+                            color:#e2e8f0;font-size:0.78rem;max-width:220px;">
+                        </select>
+                    </div>
+                </div>
+                <p id="descricaoGraficoCategorias" style="color:#8892a4;font-size:0.78rem;margin:-0.5rem 0 1rem;">
+                    Cada categoria tem sua própria cor; as 4 barrinhas dela (em tons
+                    dessa cor) mostram Disponível, Em Uso, Manutenção e Perdido. A
+                    coluna seguinte mostra as devoluções do mês escolhido.
+                </p>
+                <div style="position:relative;height:360px;">
+                    <canvas id="graficoCategorias"></canvas>
+                </div>
+            </div>
+
+            <!-- Tabela movimentações recentes -->
+            <div class="card" style="margin-bottom:1.5rem;">
+                <div class="card-header">
+                    <h2>Movimentações Recentes</h2>
+                    <span id="totalEqLabel" style="color:#8892a4;font-size:0.85rem;">
+                        0 registros
+                    </span>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data / Hora</th>
+                                <th>Equipamento</th>
+                                <th>Funcionário</th>
+                                <th>Tipo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaMovimentacoes">
+                            <tr><td colspan="4"
+                                style="text-align:center;color:#8892a4;padding:2rem;">
+                                Nenhuma movimentação registrada</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Alertas -->
+            <div class="card" id="cardAlertas" style="display:none;">
+                <div class="card-header">
+                    <h2>⚠️ Alertas de Estoque</h2>
+                    <button class="btn btn-secondary"
+                        onclick="marcarTodosLidos()"
+                        style="padding:0.4rem 0.8rem;font-size:0.8rem;">
+                        ✅ Marcar todos como lidos
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Equipamento</th>
+                                <th>Mensagem</th>
+                                <th>Tipo</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaAlertas"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script src="js/config.js"></script>
+<script>
+    const token   = localStorage.getItem("token");
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    if (!token) window.location.href = "login.html";
+
+    const nome = usuario.nome || "Usuário";
+    document.getElementById("sidebarNome").textContent = nome;
+    document.getElementById("avatarLetra").textContent = nome.charAt(0).toUpperCase();
+    const perfis = { admin:"Administrador", operador:"Operador", visitante:"Visitante" };
+    document.getElementById("sidebarPerfil").textContent = perfis[usuario.perfil] || usuario.perfil;
+    if (usuario.perfil !== "admin") {
+        const linkTecnicos = document.getElementById("linkTecnicos");
+        if (linkTecnicos) linkTecnicos.style.display = "none";
+    }
+    document.getElementById("nomeEmpresa").textContent = "🏢 " + (usuario.empresa_nome || "");
+    // ============================================================
+    // Troca de empresa (só Super Admin)
+    // ============================================================
+    const empresasDisponiveis = [
+        { id: 1, nome: "Matriz" },
+        { id: 2, nome: "Filial" }
+    ];
+
+    if (usuario.acesso_todas) {
+        document.getElementById("setaEmpresa").style.display = "inline";
+        montarDropdownEmpresa();
+    } else {
+        document.getElementById("btnEmpresa").style.cursor = "default";
+    }
+
+    function montarDropdownEmpresa() {
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.innerHTML = empresasDisponiveis.map(e => `
+            <div onclick="trocarEmpresa(${e.id})" style="
+                padding:0.6rem 1rem;cursor:pointer;font-size:0.85rem;
+                color:#e2e8f0;"
+                onmouseover="this.style.background='rgba(79,142,247,0.1)'"
+                onmouseout="this.style.background='transparent'">
+                ${e.nome}
+            </div>
+        `).join("");
+    }
+
+    function toggleDropdownEmpresa() {
+        if (!usuario.acesso_todas) return;
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    }
+
+    async function trocarEmpresa(idEmpresa) {
+        if (idEmpresa === usuario.id_empresa) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+            return;
+        }
+        try {
+            const resposta = await fetch(`${API_URL}/api/auth/trocar-empresa`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ id_empresa: idEmpresa })
+            });
+            const dados = await resposta.json();
+            if (resposta.ok) {
+                localStorage.setItem("token", dados.token);
+                localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+                window.location.reload();
+            } else {
+                alert("Erro ao trocar de empresa: " + dados.erro);
+            }
+        } catch (e) {
+            alert("Erro ao conectar com o servidor.");
+        }
+    }
+
+    // Fecha o dropdown se clicar fora dele
+    document.addEventListener("click", (e) => {
+        const seletor = document.getElementById("seletorEmpresa");
+        if (seletor && !seletor.contains(e.target) ) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+        }
+    });
+
+    let graficoStatusInst     = null;
+    let graficoMovInst        = null;
+    let graficoCategoriasInst = null;
+    let dadosEquipamentos     = [];
+    let dadosUnidades         = [];
+    let dadosMovimentacoes    = [];
+
+    // Posicionamento customizado do tooltip do gráfico de categorias: no
+    // modo "index" a maioria das séries fica zerada em cada coluna (só
+    // uma ou duas têm valor de verdade ali), então o cálculo padrão do
+    // Chart.js (média de todos os pontos, incluindo os zerados que ficam
+    // na base do gráfico) jogava o tooltip pra baixo, perto da base, em
+    // vez de ficar acima da barra que realmente tem dado. Aqui a gente
+    // ignora os pontos com valor 0 e usa o topo da barra mais alta.
+    Chart.Tooltip.positioners.acimaDaBarraComDado = function(elementos, posicaoEvento) {
+        const comDado = elementos.filter(el => (el.element?.$context?.raw ?? 0) !== 0);
+        const lista = comDado.length > 0 ? comDado : elementos;
+        if (lista.length === 0) return false;
+
+        let menorY = Infinity;
+        let somaX  = 0;
+        lista.forEach(el => {
+            const pos = el.element.tooltipPosition();
+            menorY = Math.min(menorY, pos.y);
+            somaX += pos.x;
+        });
+        return { x: somaX / lista.length, y: menorY };
+    };
+
+    function preencherFiltroEquipamentoStatus() {
+        const select = document.getElementById("filtroEquipamentoStatus");
+        const valorAtual = select.value;
+        select.innerHTML = '<option value="" style="background:#1a1f2e;color:#e2e8f0;">Todos os equipamentos</option>';
+        dadosEquipamentos
+            .slice()
+            .sort((a, b) => a.nome.localeCompare(b.nome))
+            .forEach(eq => {
+                const option = document.createElement("option");
+                option.value = eq.id;
+                option.textContent = eq.nome;
+                option.style.background = "#1a1f2e";
+                option.style.color = "#e2e8f0";
+                select.appendChild(option);
+            });
+        select.value = valorAtual;
+    }
+
+    function montarGraficoStatus() {
+        const filtro = document.getElementById("filtroEquipamentoStatus").value;
+
+        let disponiveis = 0, emUso = 0, manutencao = 0, inativo = 0;
+
+        if (filtro) {
+            const idFiltro = parseInt(filtro);
+            const unidadesDoEquip = dadosUnidades.filter(u => u.id_equipamento === idFiltro);
+
+            if (unidadesDoEquip.length > 0) {
+                disponiveis = unidadesDoEquip.filter(u => u.status === "disponivel").length;
+                emUso       = unidadesDoEquip.filter(u => u.status === "em_uso").length;
+                manutencao  = unidadesDoEquip.filter(u => u.status === "manutencao").length;
+                inativo     = unidadesDoEquip.filter(u => u.status === "inativo").length;
+            } else {
+                const eq = dadosEquipamentos.find(e => e.id === idFiltro);
+                if (eq) {
+                    if (eq.status === "disponivel")      disponiveis = 1;
+                    else if (eq.status === "em_uso")      emUso = 1;
+                    else if (eq.status === "manutencao")  manutencao = 1;
+                    else if (eq.status === "inativo")     inativo = 1;
+                }
+            }
+        } else {
+            const idsComUnidades = new Set(dadosUnidades.map(u => u.id_equipamento));
+
+            disponiveis = dadosUnidades.filter(u => u.status === "disponivel").length;
+            emUso       = dadosUnidades.filter(u => u.status === "em_uso").length;
+            manutencao  = dadosUnidades.filter(u => u.status === "manutencao").length;
+            inativo     = dadosUnidades.filter(u => u.status === "inativo").length;
+
+            dadosEquipamentos
+                .filter(e => !idsComUnidades.has(e.id))
+                .forEach(e => {
+                    if (e.status === "disponivel")      disponiveis++;
+                    else if (e.status === "em_uso")      emUso++;
+                    else if (e.status === "manutencao")  manutencao++;
+                    else if (e.status === "inativo")     inativo++;
+                });
+        }
+
+        document.getElementById("totalDisponiveis").textContent = disponiveis;
+        document.getElementById("totalEmUso").textContent       = emUso;
+        document.getElementById("totalManutencao").textContent  = manutencao;
+        document.getElementById("totalPerdidos").textContent    = inativo;
+
+        if (graficoStatusInst) graficoStatusInst.destroy();
+        const ctxStatus = document.getElementById("graficoStatus").getContext("2d");
+        graficoStatusInst = new Chart(ctxStatus, {
+            type: "doughnut",
+            data: {
+                labels: ["Disponível", "Em Uso", "Manutenção", "Inativo"],
+                datasets: [{
+                    data: [disponiveis, emUso, manutencao, inativo],
+                    backgroundColor: [
+                        "rgba(34,197,94,0.8)", "rgba(79,142,247,0.8)",
+                        "rgba(245,158,11,0.8)", "rgba(100,116,139,0.8)"
+                    ],
+                    borderColor: ["#22c55e","#4f8ef7","#f59e0b","#64748b"],
+                    borderWidth: 2,
+                    hoverBorderColor: "#ffffff",
+                    hoverBorderWidth: 3,
+                    hoverOffset: 12
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: { color:"#8892a4", padding:15, font:{ size:12 } }
+                    },
+                    tooltip: {
+                        filter: (item) => item.raw !== 0
+                    }
+                }
+            }
+        });
+    }
+
+    function montarGraficoMovimentacoes() {
+        const filtro = document.getElementById("filtroEquipamentoStatus").value;
+        const movimentacoesFiltradas = filtro
+            ? dadosMovimentacoes.filter(m => m.id_equipamento === parseInt(filtro))
+            : dadosMovimentacoes;
+
+        const ultimos7dias = [];
+        const labels7dias  = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            ultimos7dias.push(d.toISOString().split("T")[0]);
+            labels7dias.push(d.toLocaleDateString("pt-BR",
+                { day:"2-digit", month:"2-digit" }));
+        }
+
+        const saidas = ultimos7dias.map(dia =>
+            movimentacoesFiltradas.filter(m =>
+                m.tipo === "saida" &&
+                new Date(m.criado_em).toISOString().split("T")[0] === dia
+            ).length
+        );
+        const devolucoes = ultimos7dias.map(dia =>
+            movimentacoesFiltradas.filter(m =>
+                m.tipo === "devolucao" &&
+                new Date(m.criado_em).toISOString().split("T")[0] === dia
+            ).length
+        );
+
+        if (graficoMovInst) graficoMovInst.destroy();
+        const ctxMov = document.getElementById("graficoMovimentacoes").getContext("2d");
+        graficoMovInst = new Chart(ctxMov, {
+            type: "bar",
+            data: {
+                labels: labels7dias,
+                datasets: [
+                    {
+                        label: "Saídas", data: saidas,
+                        backgroundColor: "rgba(239,68,68,0.7)",
+                        borderColor: "#ef4444", borderWidth:1, borderRadius:6,
+                        hoverBorderColor: "#ffffff", hoverBorderWidth: 3
+                    },
+                    {
+                        label: "Devoluções", data: devolucoes,
+                        backgroundColor: "rgba(34,197,94,0.7)",
+                        borderColor: "#22c55e", borderWidth:1, borderRadius:6,
+                        hoverBorderColor: "#ffffff", hoverBorderWidth: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: "index", intersect: false },
+                plugins: {
+                    legend: { labels: { color:"#8892a4", font:{ size:12 } } },
+                    tooltip: {
+                        mode: "index",
+                        intersect: false,
+                        position: "acimaDaBarraComDado",
+                        yAlign: "bottom",
+                        filter: (item) => item.raw !== 0
+                    }
+                },
+                scales: {
+                    x: { ticks:{ color:"#8892a4" }, grid:{ color:"rgba(255,255,255,0.05)" } },
+                    y: { ticks:{ color:"#8892a4", stepSize:1 }, grid:{ color:"rgba(255,255,255,0.05)" } }
+                }
+            }
+        });
+    }
+
+    // Chamada quando o filtro de equipamento muda: atualiza os dois
+    // gráficos (status e movimentações), pra ficarem sempre em sincronia
+    function atualizarGraficoStatus() {
+        montarGraficoStatus();
+        montarGraficoMovimentacoes();
+    }
+
+    // Combina "Equipamentos por Categoria" com o total por status: pra
+    // cada categoria, 4 barrinhas agrupadas (Disponível/Em Uso/
+    // Manutenção/Perdido). Cada categoria (e a coluna do mês) tem seu
+    // próprio matiz de cor; dentro do grupo, a luminosidade varia por
+    // status. Pra equipamentos sem unidades individuais rastreadas, usa
+    // a quantidade e o status do próprio equipamento. Uma última coluna
+    // extra mostra as devoluções do mês escolhido no seletor, pela
+    // condição informada na devolução (Disponível=boa condição,
+    // Manutenção, Perdido) - "Em Uso" não existe pra devolução, então
+    // fica sempre zero ali.
+    // Soma equipamentos+unidades por status, agrupando pela chave que a
+    // função "chaveFn" extrair de cada equipamento - categoria (resumo)
+    // ou nome real do equipamento (detalhe dentro de uma categoria).
+    function calcularTotaisPorChave(equipamentos, unidades, chaveFn) {
+        const porChave = {};
+        equipamentos.forEach(eq => {
+            const chave = chaveFn(eq);
+            if (!porChave[chave]) {
+                porChave[chave] = { disponivel: 0, em_uso: 0, manutencao: 0, inativo: 0 };
+            }
+
+            const unidadesDoEquip = unidades.filter(u => u.id_equipamento === eq.id);
+            if (unidadesDoEquip.length > 0) {
+                porChave[chave].disponivel += unidadesDoEquip.filter(u => u.status === "disponivel").length;
+                porChave[chave].em_uso     += unidadesDoEquip.filter(u => u.status === "em_uso").length;
+                porChave[chave].manutencao += unidadesDoEquip.filter(u => u.status === "manutencao").length;
+                porChave[chave].inativo    += unidadesDoEquip.filter(u => u.status === "inativo").length;
+            } else {
+                porChave[chave][eq.status] += eq.quantidade;
+            }
+        });
+        return porChave;
+    }
+
+    function calcularTotaisPorCategoria(equipamentos, unidades) {
+        return calcularTotaisPorChave(equipamentos, unidades, eq => eq.categoria || "Sem categoria");
+    }
+
+    function totalDaChave(porChave, chave) {
+        const c = porChave[chave];
+        return c ? c.disponivel + c.em_uso + c.manutencao + c.inativo : 0;
+    }
+
+    async function montarGraficoCategoriasStatus() {
+        const porCategoria = calcularTotaisPorCategoria(dadosEquipamentos, dadosUnidades);
+
+        let categorias = Object.keys(porCategoria).sort((a, b) => {
+            const totalA = Object.values(porCategoria[a]).reduce((s, v) => s + v, 0);
+            const totalB = Object.values(porCategoria[b]).reduce((s, v) => s + v, 0);
+            return totalB - totalA;
+        });
+
+        // Cor fixa por empresa (não o matiz automático das categorias),
+        // já que aqui a cor precisa identificar SEMPRE a mesma empresa.
+        const EMPRESAS_COMBINADO = [
+            { nome: "Matriz", corSaida: "rgba(154,52,18,0.9)", corDevolucao: "rgba(249,115,22,0.55)" },
+            { nome: "Filial",    corSaida: "rgba(30,58,138,0.9)", corDevolucao: "rgba(59,130,246,0.55)" }
+        ];
+
+        // Só pro Super Admin (acesso_todas): equipamentos+unidades das
+        // duas empresas de uma vez, reaproveitados tanto no resumo por
+        // categoria quanto no detalhe por equipamento (abaixo).
+        let todosEquipamentosGlobal = null;
+        let todasUnidadesGlobal     = null;
+        if (usuario.acesso_todas) {
+            try {
+                const [rEq, rUn] = await Promise.all([
+                    fetch(`${API_URL}/api/equipamentos/todas-empresas`, { headers: { "Authorization": `Bearer ${token}` } }),
+                    fetch(`${API_URL}/api/unidades/todas-empresas`,     { headers: { "Authorization": `Bearer ${token}` } })
+                ]);
+                if (rEq.ok && rUn.ok) {
+                    todosEquipamentosGlobal = await rEq.json();
+                    todasUnidadesGlobal     = await rUn.json();
+                }
+            } catch (e) {
+                console.error("Erro ao carregar equipamentos/unidades de todas as empresas:", e);
+            }
+        }
+
+        // Inclui categorias que só existem na outra empresa (ex: "INSUMOS"
+        // só na Filial), pra aparecerem no seletor mesmo com Matriz
+        // selecionada.
+        if (todosEquipamentosGlobal) {
+            todosEquipamentosGlobal.forEach(eq => {
+                const cat = eq.categoria || "Sem categoria";
+                if (!categorias.includes(cat)) categorias.push(cat);
+            });
+        }
+
+        // Seletor de categoria: preenche as opções (preservando a escolha
+        // atual) e lê o valor - vazio = resumo por categoria, escolhido =
+        // detalhe por equipamento (pelo nome real) dentro dessa categoria.
+        const selectCategoria = document.getElementById("filtroCategoriaEquip");
+        const valorAnterior = selectCategoria.value;
+        selectCategoria.innerHTML = '<option value="" style="background:#1a1f2e;color:#e2e8f0;">📦 Todas as categorias (resumo)</option>' +
+            categorias.map(c => `<option value="${c}" style="background:#1a1f2e;color:#e2e8f0;">${c}</option>`).join("");
+        selectCategoria.value = categorias.includes(valorAnterior) ? valorAnterior : "";
+        const categoriaSelecionada = selectCategoria.value;
+
+        const descricao = document.getElementById("descricaoGraficoCategorias");
+        let labels, datasets;
+        let usaEixoEmpresas = false;
+
+        if (categoriaSelecionada) {
+            // ============================================================
+            // MODO DETALHE: uma barra por equipamento (pelo nome real),
+            // dentro da categoria escolhida no seletor
+            // ============================================================
+            const equipamentosDaCategoria = dadosEquipamentos.filter(eq =>
+                (eq.categoria || "Sem categoria") === categoriaSelecionada);
+            const porEquipamento = calcularTotaisPorChave(equipamentosDaCategoria, dadosUnidades, eq => eq.nome);
+
+            let nomes = Object.keys(porEquipamento);
+
+            let estoquePorEquipamentoEmpresa = null;
+            if (todosEquipamentosGlobal) {
+                estoquePorEquipamentoEmpresa = {};
+                EMPRESAS_COMBINADO.forEach(emp => {
+                    const eqDaEmpresa = todosEquipamentosGlobal.filter(e =>
+                        e.empresa_nome === emp.nome && (e.categoria || "Sem categoria") === categoriaSelecionada);
+                    const unDaEmpresa = todasUnidadesGlobal.filter(u => u.empresa_nome === emp.nome);
+                    const porNome = calcularTotaisPorChave(eqDaEmpresa, unDaEmpresa, eq => eq.nome);
+
+                    estoquePorEquipamentoEmpresa[emp.nome] = {};
+                    Object.keys(porNome).forEach(nome => {
+                        estoquePorEquipamentoEmpresa[emp.nome][nome] = totalDaChave(porNome, nome);
+                        if (!nomes.includes(nome)) nomes.push(nome);
+                    });
+                });
+            }
+
+            nomes.sort((a, b) => {
+                const extra = (nome) => estoquePorEquipamentoEmpresa
+                    ? EMPRESAS_COMBINADO.reduce((s, e) => s + (estoquePorEquipamentoEmpresa[e.nome][nome] || 0), 0)
+                    : 0;
+                return (totalDaChave(porEquipamento, b) + extra(b)) - (totalDaChave(porEquipamento, a) + extra(a));
+            });
+
+            labels = nomes;
+
+            descricao.innerHTML = estoquePorEquipamentoEmpresa
+                ? `Mostrando cada equipamento da categoria <strong>${categoriaSelecionada}</strong> pelo
+                   nome real, com a quantidade de cada empresa
+                   (<strong style="color:#9a3412;">Matriz</strong> em laranja escuro,
+                   <strong style="color:#1e3a8a;">Filial</strong> em azul escuro). Escolha
+                   "Todas as categorias" no seletor pra voltar ao resumo.`
+                : `Mostrando cada equipamento da categoria <strong>${categoriaSelecionada}</strong> pelo
+                   nome real, com as 4 barrinhas de status (Disponível, Em Uso, Manutenção e Perdido).
+                   Escolha "Todas as categorias" no seletor pra voltar ao resumo.`;
+
+            const statusListDetalhe = [
+                { chave: "disponivel", label: "Disponível" },
+                { chave: "em_uso",     label: "Em Uso" },
+                { chave: "manutencao", label: "Manutenção" },
+                { chave: "inativo",    label: "Perdido" }
+            ];
+
+            const totalGrupos = labels.length;
+            const corDoGrupo = (indiceGrupo, tom) => {
+                const matiz = Math.round((indiceGrupo * 360) / Math.max(totalGrupos, 1));
+                const luminosidade = 35 + tom * 13;
+                return `hsla(${matiz}, 65%, ${luminosidade}%, 0.9)`;
+            };
+
+            datasets = statusListDetalhe.map((s, tom) => ({
+                label: s.label,
+                data: labels.map(nome => (porEquipamento[nome] || {})[s.chave] || 0),
+                backgroundColor: labels.map((_, i) => corDoGrupo(i, tom)),
+                borderRadius: 4,
+                hoverBorderColor: "#ffffff",
+                hoverBorderWidth: 3
+            }));
+
+            if (estoquePorEquipamentoEmpresa) {
+                EMPRESAS_COMBINADO.forEach(emp => {
+                    datasets.push({
+                        label: `${emp.nome} — Estoque`,
+                        data: labels.map(nome => (estoquePorEquipamentoEmpresa[emp.nome] || {})[nome] || 0),
+                        backgroundColor: emp.corSaida,
+                        borderRadius: 4,
+                        hoverBorderColor: "#ffffff",
+                        hoverBorderWidth: 3
+                    });
+                });
+            }
+
+        } else {
+            // ============================================================
+            // MODO RESUMO (padrão): uma barra por categoria
+            // ============================================================
+
+            // Busca o resumo do mês selecionado, pra virar a última coluna do gráfico
+            const selectMes = document.getElementById("mesResumo");
+            const [mes, ano] = selectMes.value.split("-");
+            let resumoMes = { disponiveis: 0, manutencao: 0, perdidos: 0 };
+            try {
+                const r = await fetch(`${API_URL}/api/movimentacoes/resumo-mes?mes=${mes}&ano=${ano}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                resumoMes = await r.json();
+            } catch (e) {
+                console.error("Erro ao carregar resumo do mês:", e);
+            }
+            const rotuloMes = `Devoluções (${selectMes.options[selectMes.selectedIndex].textContent})`;
+
+            // Só pro Super Admin: soma saídas/devoluções dos últimos 7 dias
+            // de cada empresa, pra virarem 2 colunas extras no gráfico.
+            let empresasCombinado = [];
+            if (usuario.acesso_todas) {
+                try {
+                    const rTodas = await fetch(`${API_URL}/api/movimentacoes/todas-empresas`, {
+                        headers: { "Authorization": `Bearer ${token}` }
+                    });
+                    if (rTodas.ok) {
+                        const todasMovimentacoes = await rTodas.json();
+                        const seteDiasAtras = new Date();
+                        seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+
+                        empresasCombinado = EMPRESAS_COMBINADO.map(emp => {
+                            const doPeriodo = todasMovimentacoes.filter(m =>
+                                m.empresa_nome === emp.nome && new Date(m.criado_em) >= seteDiasAtras);
+                            return {
+                                ...emp,
+                                label: `${emp.nome} (7 dias)`,
+                                saidas: doPeriodo.filter(m => m.tipo === "saida").length,
+                                devolucoes: doPeriodo.filter(m => m.tipo === "devolucao").length
+                            };
+                        });
+                    }
+                } catch (e) {
+                    console.error("Erro ao carregar movimentações combinadas:", e);
+                }
+            }
+
+            // Também só pro Super Admin: quanto cada empresa tem de cada
+            // categoria em estoque, pra virar mais 2 barrinhas em cada
+            // categoria já existente no gráfico.
+            let estoquePorCategoriaEmpresa = null;
+            if (todosEquipamentosGlobal) {
+                estoquePorCategoriaEmpresa = {};
+                EMPRESAS_COMBINADO.forEach(emp => {
+                    const eqDaEmpresa = todosEquipamentosGlobal.filter(e => e.empresa_nome === emp.nome);
+                    const unDaEmpresa = todasUnidadesGlobal.filter(u => u.empresa_nome === emp.nome);
+                    const porCat = calcularTotaisPorCategoria(eqDaEmpresa, unDaEmpresa);
+
+                    estoquePorCategoriaEmpresa[emp.nome] = {};
+                    Object.keys(porCat).forEach(cat => {
+                        estoquePorCategoriaEmpresa[emp.nome][cat] = totalDaChave(porCat, cat);
+                    });
+                });
+            }
+
+            descricao.innerHTML = empresasCombinado.length > 0
+                ? `Cada categoria tem sua própria cor; as 4 barrinhas dela (em tons
+                    dessa cor) mostram Disponível, Em Uso, Manutenção e Perdido. Em seguida, quanto cada
+                    empresa tem daquela categoria em estoque e, na última coluna, o total de
+                    saídas/devoluções dos últimos 7 dias de cada empresa - exclusivo do Super Admin
+                    (<strong style="color:#9a3412;">Matriz</strong> em laranja escuro,
+                    <strong style="color:#1e3a8a;">Filial</strong> em azul escuro). Escolha uma categoria
+                    no seletor acima pra ver o detalhe por equipamento.`
+                : `Cada categoria tem sua própria cor; as 4 barrinhas dela (em tons
+                    dessa cor) mostram Disponível, Em Uso, Manutenção e Perdido. A coluna seguinte mostra
+                    as devoluções do mês escolhido. Escolha uma categoria no seletor acima pra ver o
+                    detalhe por equipamento.`;
+
+            labels = [...categorias, rotuloMes, ...empresasCombinado.map(e => e.label)];
+
+            const statusList = [
+                { chave: "disponivel", label: "Disponível",  valorMes: resumoMes.disponiveis },
+                { chave: "em_uso",     label: "Em Uso",       valorMes: 0 },
+                { chave: "manutencao", label: "Manutenção",   valorMes: resumoMes.manutencao },
+                { chave: "inativo",    label: "Perdido",      valorMes: resumoMes.perdidos }
+            ];
+
+            // Cada grupo (categoria ou a coluna do mês) tem seu próprio matiz;
+            // dentro do grupo, a luminosidade varia por status (mais escuro =
+            // Disponível, mais claro = Perdido).
+            const totalGrupos = labels.length;
+            const corDoGrupo = (indiceGrupo, tom) => {
+                const matiz = Math.round((indiceGrupo * 360) / Math.max(totalGrupos, 1));
+                const luminosidade = 35 + tom * 13; // 35, 48, 61, 74
+                return `hsla(${matiz}, 65%, ${luminosidade}%, 0.9)`;
+            };
+
+            datasets = statusList.map((s, tom) => ({
+                label: s.label,
+                data: [...categorias.map(cat => (porCategoria[cat] || {})[s.chave] || 0), s.valorMes, ...empresasCombinado.map(() => 0)],
+                backgroundColor: labels.map((_, i) => corDoGrupo(i, tom)),
+                borderRadius: 4,
+                hoverBorderColor: "#ffffff",
+                hoverBorderWidth: 3
+            }));
+
+            // Barrinhas de estoque por empresa em cada categoria (só existem
+            // quando estoquePorCategoriaEmpresa foi carregado, ou seja, só pro
+            // Super Admin) - cor fixa por empresa, igual as colunas de "7 dias".
+            if (estoquePorCategoriaEmpresa) {
+                const zerosDepoisDasCategorias = [0, ...empresasCombinado.map(() => 0)];
+                EMPRESAS_COMBINADO.forEach(emp => {
+                    const dadosPorCategoria = categorias.map(cat => (estoquePorCategoriaEmpresa[emp.nome] || {})[cat] || 0);
+                    datasets.push({
+                        label: `${emp.nome} — Estoque`,
+                        data: [...dadosPorCategoria, ...zerosDepoisDasCategorias],
+                        backgroundColor: emp.corSaida,
+                        borderRadius: 4,
+                        hoverBorderColor: "#ffffff",
+                        hoverBorderWidth: 3
+                    });
+                });
+            }
+
+            // Colunas extras de saída/devolução por empresa (só existem quando
+            // empresasCombinado tem itens, ou seja, só pro Super Admin). Um
+            // dataset por empresa+tipo (cor única, não array) - assim a
+            // legenda do Chart.js mostra o quadradinho de cor certo (com
+            // array de cores ela usa sempre a primeira posição como cor da
+            // legenda, o que ficava errado/transparente aqui).
+            if (empresasCombinado.length > 0) {
+                usaEixoEmpresas = true;
+                const zerosAntesDasEmpresas = [...categorias.map(() => 0), 0];
+                empresasCombinado.forEach((emp, indiceEmpresa) => {
+                    const dataSaida = empresasCombinado.map((_, i) => i === indiceEmpresa ? emp.saidas : 0);
+                    const dataDevolucao = empresasCombinado.map((_, i) => i === indiceEmpresa ? emp.devolucoes : 0);
+
+                    datasets.push({
+                        label: `${emp.nome} — Saídas (7 dias)`,
+                        data: [...zerosAntesDasEmpresas, ...dataSaida],
+                        backgroundColor: emp.corSaida,
+                        borderRadius: 4,
+                        yAxisID: "yEmpresas",
+                        hoverBorderColor: "#ffffff",
+                        hoverBorderWidth: 3
+                    });
+                    datasets.push({
+                        label: `${emp.nome} — Devoluções (7 dias)`,
+                        data: [...zerosAntesDasEmpresas, ...dataDevolucao],
+                        backgroundColor: emp.corDevolucao,
+                        borderRadius: 4,
+                        yAxisID: "yEmpresas",
+                        hoverBorderColor: "#ffffff",
+                        hoverBorderWidth: 3
+                    });
+                });
+            }
+        }
+
+        // Escreve o número em cima de cada barra (mesmo as bem pequenas,
+        // tipo a coluna de Devoluções do mês) - sem isso, barras com valor
+        // baixo perto de categorias com milhares de unidades ficam
+        // visualmente invisíveis, mesmo o dado estando correto.
+        const rotulosDeValor = {
+            id: "rotulosDeValor",
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    if (meta.hidden) return;
+                    meta.data.forEach((barra, j) => {
+                        const valor = dataset.data[j];
+                        if (!valor) return;
+                        ctx.save();
+                        ctx.fillStyle = "#e2e8f0";
+                        ctx.font = "10px sans-serif";
+                        ctx.textAlign = "center";
+                        ctx.fillText(valor, barra.x, barra.y - 4);
+                        ctx.restore();
+                    });
+                });
+            }
+        };
+
+        // As colunas de empresa (Matriz/Filial 7 dias) ficam num eixo Y
+        // próprio (à direita, com escala independente) - assim elas sempre
+        // aparecem em tamanho visível, não importa se as categorias do
+        // lado (eixo da esquerda) estão na casa das dezenas ou dos milhares.
+        // Só existe no modo resumo (o modo detalhe não tem essas colunas).
+        const escalas = {
+            x: { ticks: { color: "#8892a4" }, grid: { color: "rgba(255,255,255,0.05)" } },
+            y: { ticks: { color: "#8892a4", stepSize: 1 }, grid: { color: "rgba(255,255,255,0.05)" } }
+        };
+        if (usaEixoEmpresas) {
+            escalas.yEmpresas = {
+                position: "right",
+                grace: "15%",
+                ticks: { color: "#8892a4", stepSize: 1 },
+                grid: { drawOnChartArea: false }
+            };
+        }
+
+        if (graficoCategoriasInst) graficoCategoriasInst.destroy();
+        const ctxCat = document.getElementById("graficoCategorias").getContext("2d");
+        graficoCategoriasInst = new Chart(ctxCat, {
+            type: "bar",
+            data: { labels, datasets },
+            plugins: [rotulosDeValor],
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                layout: { padding: { top: 16 } },
+                // "index" + intersect:false: passar o mouse em qualquer ponto
+                // da coluna já mostra o tooltip com o nome do equipamento,
+                // sem precisar acertar o pixel exato de uma barra bem fina
+                interaction: { mode: "index", intersect: false },
+                plugins: {
+                    legend: { labels: { color: "#8892a4", font: { size: 12 } } },
+                    tooltip: {
+                        mode: "index",
+                        intersect: false,
+                        // Sempre acima da barra com dado de verdade (não da
+                        // média de todos os pontos, que incluiria as
+                        // barrinhas zeradas lá embaixo)
+                        position: "acimaDaBarraComDado",
+                        yAlign: "bottom",
+                        // Esconde do tooltip as séries com valor 0 pra essa
+                        // coluna, já que a maioria dos datasets só tem valor
+                        // em algumas posições específicas (senão o tooltip
+                        // fica cheio de linhas "0" irrelevantes)
+                        filter: (item) => item.raw !== 0
+                    }
+                },
+                scales: escalas
+            }
+        });
+    }
+
+    async function carregarDashboard() {
+        try {
+            const headers = { "Authorization": `Bearer ${token}` };
+
+           const [equipamentos, alertas, movimentacoes, unidades] = await Promise.all([
+                fetch(`${API_URL}/api/equipamentos/`,  { headers }).then(r => r.json()),
+                fetch(`${API_URL}/api/alertas/`,       { headers }).then(r => r.json()),
+                fetch(`${API_URL}/api/movimentacoes/`, { headers }).then(r => r.json()),
+                fetch(`${API_URL}/api/unidades/`,      { headers }).then(r => r.json())
+            ]);
+
+           dadosEquipamentos = equipamentos;
+            dadosUnidades     = unidades;
+            dadosMovimentacoes = movimentacoes;
+            preencherFiltroEquipamentoStatus();
+            montarGraficoStatus();
+            montarGraficoMovimentacoes();
+            montarGraficoCategoriasStatus();
+
+            document.getElementById("totalEquipamentos").textContent = equipamentos.length;
+
+            // Tabela movimentações
+            const tbody = document.getElementById("tabelaMovimentacoes");
+            document.getElementById("totalEqLabel").textContent =
+                `${movimentacoes.length} registros`;
+
+            if (movimentacoes.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4"
+                    style="text-align:center;color:#8892a4;padding:2rem;">
+                    Nenhuma movimentação registrada</td></tr>`;
+            } else {
+                const BADGE_TIPO = {
+                    saida:       { classe: "badge-vermelho", texto: "📤 Saída" },
+                    devolucao:   { classe: "badge-verde",     texto: "📥 Devolução" },
+                    manutencao:  { classe: "badge-amarelo",   texto: "🔧 Manutenção" }
+                };
+
+                tbody.innerHTML = movimentacoes.slice(0,8).map(m => `
+                    <tr>
+                        <td style="color:#8892a4;">
+                            ${new Date(m.criado_em).toLocaleString('pt-BR')}
+                        </td>
+                        <td><strong>${m.equipamento_nome || "-"}</strong></td>
+                        <td>${m.responsavel}</td>
+                        <td>
+                            <span class="badge ${BADGE_TIPO[m.tipo]?.classe || 'badge-cinza'}">
+                                ${BADGE_TIPO[m.tipo]?.texto || m.tipo}
+                            </span>
+                        </td>
+                    </tr>
+                `).join("");
+            }
+
+          // Alertas — mostra todos, com destaque para não lidos
+            if (alertas.length > 0) {
+                document.getElementById("cardAlertas").style.display = "block";
+                document.getElementById("tabelaAlertas").innerHTML =
+                    alertas.map(a => `
+                        <tr style="${!a.lido ? 'background:rgba(245,158,11,0.05);' : ''}">
+                            <td>${a.equipamento_nome || "-"}</td>
+                            <td>
+                                ${!a.lido ? '<span style="color:#f59e0b;font-weight:600;">🔔 </span>' : ''}
+                                ${a.mensagem}
+                            </td>
+                            <td>
+                                <span class="badge ${a.tipo === 'sem_estoque'
+                                    ? 'badge-vermelho' : 'badge-amarelo'}">
+                                    ${a.tipo === 'sem_estoque'
+                                        ? '🔴 Sem estoque' : '⚠️ Estoque baixo'}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge ${a.lido ? 'badge-cinza' : 'badge-amarelo'}">
+                                    ${a.lido ? '✅ Lido' : '🔔 Novo'}
+                                </span>
+                            </td>
+                            <td>
+                                ${!a.lido ? `
+                                    <button class="btn btn-secondary"
+                                        onclick="marcarLido(${a.id})"
+                                        style="padding:0.3rem 0.7rem;font-size:0.78rem;">
+                                        ✅ Marcar lido
+                                    </button>
+                                ` : '-'}
+                            </td>
+                        </tr>
+                    `).join("");
+            } else {
+                document.getElementById("cardAlertas").style.display = "none";
+            }
+
+        } catch (erro) {
+            console.error("Erro ao carregar dashboard:", erro);
+        }
+    }
+
+    async function marcarLido(id) {
+        await fetch(`${API_URL}/api/alertas/${id}/marcar-lido`, {
+            method: "PUT",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        carregarDashboard();
+    }
+
+    async function marcarTodosLidos() {
+        await fetch(`${API_URL}/api/alertas/marcar-todos-lidos`, {
+            method: "PUT",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        carregarDashboard();
+    }
+
+    function sair() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        window.location.href = "login.html";
+    }
+
+    // Preenche o seletor com os últimos 12 meses (mesmo padrão da tela de Relatórios)
+    function preencherMesesResumo() {
+        const select = document.getElementById("mesResumo");
+        const nomesMeses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                             "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+        const hoje = new Date();
+
+        for (let i = 0; i < 12; i++) {
+            const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+            const option = document.createElement("option");
+            option.value = `${d.getMonth() + 1}-${d.getFullYear()}`;
+            option.textContent = `${nomesMeses[d.getMonth()]} de ${d.getFullYear()}`;
+            option.style.background = "#1a1f2e";
+            option.style.color = "#e2e8f0";
+            select.appendChild(option);
+        }
+    }
+
+    // Converte um <canvas> do Chart.js em PNG com fundo branco,
+    // pra ficar legível quando colado numa página branca do PDF.
+    function canvasParaPngFundoBranco(idCanvas) {
+        const original = document.getElementById(idCanvas);
+        const copia  = document.createElement("canvas");
+        copia.width  = original.width;
+        copia.height = original.height;
+        const ctx = copia.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, copia.width, copia.height);
+        ctx.drawImage(original, 0, 0);
+        return copia.toDataURL("image/png");
+    }
+
+    async function exportarDashboardPDF() {
+        const btn = document.getElementById("btnExportarDashboard");
+        const textoOriginal = btn.textContent;
+        btn.textContent = "⏳ Gerando...";
+        btn.disabled = true;
+
+        try {
+            const filtroSelect = document.getElementById("filtroEquipamentoStatus");
+            const filtroTexto  = filtroSelect.value
+                ? filtroSelect.options[filtroSelect.selectedIndex].textContent
+                : "";
+
+            const corpo = {
+                graficos: {
+                    status:        canvasParaPngFundoBranco("graficoStatus"),
+                    movimentacoes: canvasParaPngFundoBranco("graficoMovimentacoes"),
+                    categorias:    canvasParaPngFundoBranco("graficoCategorias")
+                },
+                resumo: {
+                    total_equipamentos: document.getElementById("totalEquipamentos").textContent,
+                    disponiveis:        document.getElementById("totalDisponiveis").textContent,
+                    em_uso:             document.getElementById("totalEmUso").textContent,
+                    manutencao:         document.getElementById("totalManutencao").textContent,
+                    perdidos:           document.getElementById("totalPerdidos").textContent
+                },
+                filtro_equipamento: filtroTexto
+            };
+
+            const r = await fetch(`${API_URL}/api/relatorios/dashboard`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(corpo)
+            });
+
+            if (r.ok) {
+                const blob = await r.blob();
+                const url  = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href  = url;
+                link.download = `relatorio_dashboard_${
+                    new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')
+                }.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } else {
+                alert("Erro ao gerar o PDF do dashboard.");
+            }
+        } catch (e) {
+            alert("Não foi possível gerar o PDF do dashboard.");
+        }
+
+        btn.textContent = textoOriginal;
+        btn.disabled = false;
+    }
+
+    preencherMesesResumo();
+    carregarDashboard();
+</script>
+
+</body>
+</html>

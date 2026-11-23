@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Equipamentos - Sistema Almoxarifado</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="layout">
+
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div style="width:36px;height:36px;background:rgba(79,142,247,0.2);
+                border-radius:8px;display:flex;align-items:center;
+                justify-content:center;font-size:1.2rem;">📦</div>
+            <div>
+                <h2>Almoxarifado</h2>
+                <p>Sistema de Estoque</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="dashboard.html"><span>📊</span> Dashboard</a>
+            <a href="equipamentos.html" class="ativo"><span>🔧</span> Cadastro de Equipamentos</a>
+            <a href="unidades.html"><span>📷</span> Unidades</a>
+            <a href="movimentacoes.html"><span>🔄</span> Movimentações</a>
+            <a href="fornecedores.html"><span>🏭</span> Fornecedores</a>
+            <a href="tecnicos.html" id="linkTecnicos"><span>👷</span> Técnicos</a>
+            <a href="relatorios.html"><span>📄</span> Relatórios</a>
+            <a href="usuarios.html"><span>👥</span> Usuários</a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="avatar" id="avatarLetra">A</div>
+            <div class="sidebar-user-info">
+                <p id="sidebarNome">Usuário</p>
+                <span id="sidebarPerfil">Administrador</span>
+            </div>
+        </div>
+
+        <div style="padding:0.75rem 1rem;padding-top:0;">
+            <button class="btn btn-danger" onclick="sair()"
+                style="width:100%;justify-content:center;">
+                🚪 Sair
+            </button>
+        </div>
+    </aside>
+
+    <div class="main-content">
+
+        <div class="topbar">
+            <h1>Cadastro de Equipamentos</h1>
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
+                <div id="seletorEmpresa" style="position:relative;">
+    <button id="btnEmpresa" onclick="toggleDropdownEmpresa()" style="
+        color:#8892a4;font-size:0.82rem;
+        padding:0.3rem 0.75rem;
+        background:rgba(79,142,247,0.08);
+        border:1px solid rgba(79,142,247,0.15);
+        border-radius:999px;white-space:nowrap;
+        cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+        <span id="nomeEmpresa"></span>
+        <span id="setaEmpresa" style="display:none;">▾</span>
+    </button>
+    <div id="dropdownEmpresa" style="display:none;position:absolute;top:110%;right:0;
+        background:#1a1f2e;border:1px solid rgba(79,142,247,0.2);
+        border-radius:8px;min-width:160px;z-index:50;overflow:hidden;">
+    </div>
+</div>
+                <div class="badge-online" style="white-space:nowrap;">Sistema Online</div>
+            </div>
+        </div>
+
+        <div class="page-content">
+
+            <div id="msgSucesso" class="alerta alerta-sucesso" style="display:none;"></div>
+            <div id="msgErro"    class="alerta alerta-erro"    style="display:none;"></div>
+
+            <div class="card" style="margin-bottom:1.5rem;border:1px solid rgba(79,142,247,0.3);">
+                <div class="card-header">
+                    <h2>📷 Leitura Rápida por Código de Barras</h2>
+                    <span style="color:#8892a4;font-size:0.82rem;">
+                        Aponte o leitor ou digite o código
+                    </span>
+                </div>
+                <div style="display:flex;gap:1rem;align-items:center;">
+                    <input type="text" id="inputCodigoBarras"
+                        placeholder="🔍 Aponte o leitor aqui ou digite o código..."
+                        onkeypress="verificarEnterBarras(event)"
+                        autofocus
+                        style="flex:1;min-width:0;padding:0.75rem 1rem;
+                               background:#1e2235;border:1.5px solid #2a2d3e;
+                               border-radius:8px;color:#e2e8f0;
+                               font-family:inherit;font-size:1rem;outline:none;">
+                    <button class="btn btn-primary" onclick="buscarPorCodigo()"
+                        style="white-space:nowrap;flex-shrink:0;width:auto;">
+                        🔍 Buscar
+                    </button>
+                    <button class="btn btn-success" onclick="registrarSaidaRapida()"
+                        id="btnSaidaRapida"
+                        style="white-space:nowrap;flex-shrink:0;width:auto;display:none;">
+                        📤 Registrar Saída
+                    </button>
+                </div>
+
+                <div id="resultadoCodigo" style="display:none;margin-top:1rem;
+                    padding:1rem;background:rgba(79,142,247,0.08);
+                    border:1px solid rgba(79,142,247,0.2);border-radius:8px;">
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom:1.5rem;">
+                <div class="card-header" style="cursor:pointer;" onclick="toggleFiltros()">
+                    <h2>🔍 Filtros Avançados</h2>
+                    <span id="iconeFiltro" style="color:#8892a4;font-size:0.85rem;">
+                        ▼ Expandir
+                    </span>
+                </div>
+
+                <div id="painelFiltros" style="display:none;">
+                    <div style="display:grid;
+                                grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+                                gap:1rem;margin-bottom:1rem;">
+                        <div class="form-group" style="margin:0;">
+                            <label>Buscar</label>
+                            <input type="text" id="filtroBusca"
+                                placeholder="Nome ou patrimônio..."
+                                oninput="aplicarFiltros()">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label>Categoria</label>
+                            <select id="filtroCategoria" onchange="aplicarFiltros()">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label>Status</label>
+                            <select id="filtroStatus" onchange="aplicarFiltros()">
+                                <option value="">Todos</option>
+                                <option value="disponivel">✅ Disponível</option>
+                                <option value="em_uso">📤 Em Uso</option>
+                                <option value="manutencao">🔧 Manutenção</option>
+                                <option value="inativo">⛔ Inativo</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label>Fornecedor</label>
+                            <select id="filtroFornecedor" onchange="aplicarFiltros()">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label>Estoque</label>
+                            <select id="filtroEstoque" onchange="aplicarFiltros()">
+                                <option value="">Todos</option>
+                                <option value="baixo">⚠️ Estoque Baixo</option>
+                                <option value="zerado">🔴 Sem Estoque</option>
+                                <option value="ok">✅ Estoque OK</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label>Ordenar por</label>
+                            <select id="filtroOrdem" onchange="aplicarFiltros()">
+                                <option value="nome">Nome (A-Z)</option>
+                                <option value="nome_desc">Nome (Z-A)</option>
+                                <option value="quantidade">Menor quantidade</option>
+                                <option value="quantidade_desc">Maior quantidade</option>
+                                <option value="categoria">Categoria</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <span id="contadorResultados" style="color:#8892a4;font-size:0.85rem;">
+                            0 equipamentos encontrados
+                        </span>
+                        <button class="btn btn-secondary" onclick="limparFiltros()"
+                            style="padding:0.4rem 1rem;font-size:0.85rem;">
+                            🗑️ Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Lista de Equipamentos</h2>
+                    <button class="btn btn-primary" onclick="abrirModal()"
+                        id="btnNovo" style="white-space:nowrap;">
+                        ➕ Novo Equipamento
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Categoria</th>
+                                <th>Código de Barras</th>
+                                <th>Quantidade</th>
+                                <th>Status</th>
+                                <th>Fornecedor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaEquipamentos">
+                            <tr><td colspan="7"
+                                style="text-align:center;color:#8892a4;padding:2rem;">
+                                Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Novo Equipamento</h3>
+            <button class="btn-fechar" onclick="fecharModal()">×</button>
+        </div>
+
+        <input type="hidden" id="equipamentoId">
+
+        <div class="form-group">
+            <label>Nome do Equipamento *</label>
+            <input type="text" id="nome" placeholder="Ex: ONU F670L">
+        </div>
+
+        <div class="form-group">
+            <label>Descrição</label>
+            <textarea id="descricao" rows="2"
+                placeholder="Detalhes do equipamento"></textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+                <label>Nº de Patrimônio</label>
+                <input type="text" id="patrimonio" placeholder="PAT-001">
+            </div>
+            <div class="form-group">
+                <label>Categoria</label>
+                <input type="text" id="categoria" placeholder="Ex: ONU">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>📷 Código de Barras</label>
+            <input type="text" id="codigoBarras"
+                placeholder="Aponte o leitor aqui ou digite o código">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+                <label>Quantidade</label>
+                <input type="number" id="quantidade" value="0" min="0">
+            </div>
+            <div class="form-group">
+                <label>Qtd Mínima</label>
+                <input type="number" id="qtdMinima" value="5" min="0">
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+                <label>Status</label>
+                <select id="status">
+                    <option value="disponivel">✅ Disponível</option>
+                    <option value="em_uso">📤 Em Uso</option>
+                    <option value="manutencao">🔧 Manutenção</option>
+                    <option value="inativo">⛔ Inativo</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Localização</label>
+                <input type="text" id="localizacao" placeholder="Ex: Sala 01">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Fornecedor</label>
+            <select id="fornecedor">
+                <option value="">-- Selecione --</option>
+            </select>
+        </div>
+        <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:0.5rem;">
+            <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="salvarEquipamento()"
+                style="width:auto;">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalSaidaRapida">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>📤 Saída Rápida</h3>
+            <button class="btn-fechar" onclick="fecharSaidaRapida()">×</button>
+        </div>
+
+        <div id="infoEquipamentoRapido" style="
+            background:rgba(79,142,247,0.08);
+            border:1px solid rgba(79,142,247,0.2);
+            border-radius:8px;padding:1rem;margin-bottom:1rem;">
+        </div>
+
+        <div class="form-group">
+            <label>Responsável *</label>
+            <input type="text" id="rapidoResponsavel"
+                placeholder="Nome de quem está retirando">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+                <label>Quantidade *</label>
+                <input type="number" id="rapidoQuantidade" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label>Devolução Prevista</label>
+                <input type="date" id="rapidoDataDevolucao">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Observação</label>
+            <textarea id="rapidoObservacao" rows="2"
+                placeholder="Motivo, projeto, etc."></textarea>
+        </div>
+
+        <div style="display:flex;gap:1rem;justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="fecharSaidaRapida()">Cancelar</button>
+            <button class="btn btn-danger" onclick="confirmarSaidaRapida()"
+                style="width:auto;">📤 Confirmar Saída</button>
+        </div>
+    </div>
+</div>
+<script src="js/config.js"></script>
+<script>
+    const token   = localStorage.getItem("token");
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    if (!token) window.location.href = "login.html";
+
+    const nome = usuario.nome || "Usuário";
+    document.getElementById("sidebarNome").textContent = nome;
+    document.getElementById("avatarLetra").textContent = nome.charAt(0).toUpperCase();
+    const perfis = { admin:"Administrador", operador:"Operador", visitante:"Visitante" };
+    document.getElementById("sidebarPerfil").textContent = perfis[usuario.perfil] || usuario.perfil;
+    if (usuario.perfil !== "admin") {
+        const linkTecnicos = document.getElementById("linkTecnicos");
+        if (linkTecnicos) linkTecnicos.style.display = "none";
+    }
+    document.getElementById("nomeEmpresa").textContent = "🏢 " + (usuario.empresa_nome || "");
+    // ============================================================
+    // Troca de empresa (só Super Admin)
+    // ============================================================
+    const empresasDisponiveis = [
+        { id: 1, nome: "Matriz" },
+        { id: 2, nome: "Filial" }
+    ];
+
+    if (usuario.acesso_todas) {
+        document.getElementById("setaEmpresa").style.display = "inline";
+        montarDropdownEmpresa();
+    } else {
+        document.getElementById("btnEmpresa").style.cursor = "default";
+    }
+
+    function montarDropdownEmpresa() {
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.innerHTML = empresasDisponiveis.map(e => `
+            <div onclick="trocarEmpresa(${e.id})" style="
+                padding:0.6rem 1rem;cursor:pointer;font-size:0.85rem;
+                color:#e2e8f0;"
+                onmouseover="this.style.background='rgba(79,142,247,0.1)'"
+                onmouseout="this.style.background='transparent'">
+                ${e.nome}
+            </div>
+        `).join("");
+    }
+
+    function toggleDropdownEmpresa() {
+        if (!usuario.acesso_todas) return;
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    }
+
+    async function trocarEmpresa(idEmpresa) {
+        if (idEmpresa === usuario.id_empresa) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+            return;
+        }
+        try {
+            const resposta = await fetch(`${API_URL}/api/auth/trocar-empresa`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ id_empresa: idEmpresa })
+            });
+            const dados = await resposta.json();
+            if (resposta.ok) {
+                localStorage.setItem("token", dados.token);
+                localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+                window.location.reload();
+            } else {
+                alert("Erro ao trocar de empresa: " + dados.erro);
+            }
+        } catch (e) {
+            alert("Erro ao conectar com o servidor.");
+        }
+    }
+
+    // Fecha o dropdown se clicar fora dele
+    document.addEventListener("click", (e) => {
+        const seletor = document.getElementById("seletorEmpresa");
+        if (seletor && !seletor.contains(e.target)) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+        }
+    });
+
+    if (usuario.perfil === "visitante") {
+        document.getElementById("btnNovo").style.display = "none";
+    }
+
+    let todosEquipamentos  = [];
+    let equipamentoAtual   = null;
+    let unidadeAtualRapida = null; // unidade individual encontrada por código de barras (se houver)
+    let filtrosVisiveis    = false;
+
+    function verificarEnterBarras(event) {
+        if (event.key === "Enter") buscarPorCodigo();
+    }
+
+        async function buscarPorCodigo() {
+        const codigo = document.getElementById("inputCodigoBarras").value.trim();
+        if (!codigo) return;
+
+        const resultado = document.getElementById("resultadoCodigo");
+        const btnSaida  = document.getElementById("btnSaidaRapida");
+
+        // 1) Primeiro tenta achar pelo código "mestre" do equipamento (como já era)
+        let encontrado = todosEquipamentos.find(eq => eq.codigo_barras === codigo);
+        let unidadeEncontrada = null;
+
+        // 2) Se não achou, tenta buscar como unidade individual (código de barras por peça)
+        if (!encontrado) {
+            try {
+                const r = await fetch(`${API_URL}/api/unidades/barras/${codigo}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (r.ok) {
+                    unidadeEncontrada = await r.json();
+                    encontrado = todosEquipamentos.find(eq => eq.id === unidadeEncontrada.id_equipamento);
+                }
+            } catch (e) {
+                console.error("Erro ao buscar unidade:", e);
+            }
+        }
+
+        if (encontrado) {
+            equipamentoAtual   = encontrado;
+            unidadeAtualRapida = unidadeEncontrada;
+            resultado.style.display = "block";
+            resultado.innerHTML = `
+                <div style="display:flex;align-items:center;
+                            justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+                    <div>
+                        <p style="font-weight:700;font-size:1rem;
+                                  color:#e2e8f0;margin-bottom:0.3rem;">
+                            ✅ ${encontrado.nome}
+                                                <p style="color:#8892a4;font-size:0.85rem;">
+                            Categoria: ${encontrado.categoria || "-"}
+                            ${unidadeEncontrada ? `
+                                &nbsp;|&nbsp; Código da unidade:
+                                <strong style="color:#4f8ef7;">${unidadeEncontrada.codigo_barras}</strong>
+                                &nbsp;|&nbsp; Status da unidade:
+                                <strong style="color:${unidadeEncontrada.status === 'disponivel' ? '#22c55e' : '#f59e0b'};">
+                                    ${unidadeEncontrada.status}
+                                </strong>
+                            ` : `
+                                &nbsp;|&nbsp; Quantidade disponível:
+                                <strong style="color:${encontrado.quantidade > 0
+                                    ? '#22c55e' : '#ef4444'};">
+                                    ${encontrado.quantidade}
+                                </strong>
+                                &nbsp;|&nbsp; Status: ${encontrado.status}
+                            `}
+                        </p>
+            `;
+            // Se veio de uma unidade específica, quem manda é o status dela
+            // (o total do equipamento pode estar >0 com essa unidade já em uso)
+            const disponivelParaSaida = unidadeEncontrada
+                ? unidadeEncontrada.status === "disponivel"
+                : encontrado.quantidade > 0;
+
+            if (disponivelParaSaida && usuario.perfil !== "visitante") {
+                btnSaida.style.display = "inline-flex";
+            } else {
+                btnSaida.style.display = "none";
+            }
+        } else {
+            equipamentoAtual   = null;
+            unidadeAtualRapida = null;
+            btnSaida.style.display = "none";
+            resultado.style.display = "block";
+            resultado.style.background = "rgba(239,68,68,0.08)";
+            resultado.style.borderColor = "rgba(239,68,68,0.2)";
+            resultado.innerHTML = `
+                <p style="color:#f87171;">
+                    ❌ Nenhum equipamento encontrado com o código
+                    <strong>${codigo}</strong>
+                </p>
+            `;
+        }
+    }
+
+    function registrarSaidaRapida() {
+        if (!equipamentoAtual) return;
+
+        const qtdInput = document.getElementById("rapidoQuantidade");
+
+        document.getElementById("infoEquipamentoRapido").innerHTML = unidadeAtualRapida ? `
+            <p style="font-weight:700;color:#e2e8f0;margin-bottom:0.3rem;">
+                📦 ${equipamentoAtual.nome}
+            </p>
+            <p style="color:#8892a4;font-size:0.85rem;">
+                Unidade: <strong style="color:#4f8ef7;">${unidadeAtualRapida.codigo_barras}</strong>
+            </p>
+        ` : `
+            <p style="font-weight:700;color:#e2e8f0;margin-bottom:0.3rem;">
+                📦 ${equipamentoAtual.nome}
+            </p>
+            <p style="color:#8892a4;font-size:0.85rem;">
+                Disponível: <strong style="color:#22c55e;">
+                    ${equipamentoAtual.quantidade} unidade(s)
+                </strong>
+            </p>
+        `;
+        document.getElementById("rapidoResponsavel").value = "";
+        qtdInput.value    = "1";
+        qtdInput.disabled = !!unidadeAtualRapida; // unidade individual = sempre 1
+        document.getElementById("rapidoDataDevolucao").value = "";
+        document.getElementById("rapidoObservacao").value  = "";
+        document.getElementById("modalSaidaRapida").classList.add("ativo");
+    }
+
+    function fecharSaidaRapida() {
+        document.getElementById("modalSaidaRapida").classList.remove("ativo");
+    }
+
+    async function confirmarSaidaRapida() {
+        const responsavel = document.getElementById("rapidoResponsavel").value;
+        if (!responsavel) {
+            mostrarErro("Responsável é obrigatório!");
+            return;
+        }
+
+        // Unidade individual (código de barras por peça) -> precisa passar
+        // pelo endpoint de unidades, que marca ESSA unidade como em_uso.
+        // Chamar o endpoint por quantidade aqui deixaria o status da unidade
+        // dessincronizado do total do equipamento.
+        const url = unidadeAtualRapida
+            ? `${API_URL}/api/unidades/saida`
+            : `${API_URL}/api/movimentacoes/saida`;
+
+        const dados = unidadeAtualRapida ? {
+            codigo_barras: unidadeAtualRapida.codigo_barras,
+            responsavel,
+            observacao: document.getElementById("rapidoObservacao").value
+        } : {
+            id_equipamento: equipamentoAtual.id,
+            responsavel,
+            quantidade:     parseInt(document.getElementById("rapidoQuantidade").value),
+            data_devolucao_prevista: document.getElementById("rapidoDataDevolucao").value || null,
+            observacao:     document.getElementById("rapidoObservacao").value
+        };
+
+        try {
+            const r = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(dados)
+            });
+            const resultado = await r.json();
+
+            if (r.ok) {
+                mostrarSucesso(`Saída de ${equipamentoAtual.nome} registrada!`);
+                fecharSaidaRapida();
+                document.getElementById("inputCodigoBarras").value = "";
+                document.getElementById("resultadoCodigo").style.display = "none";
+                document.getElementById("btnSaidaRapida").style.display = "none";
+                equipamentoAtual   = null;
+                unidadeAtualRapida = null;
+                carregarEquipamentos();
+            } else {
+                mostrarErro(resultado.erro);
+            }
+        } catch (e) { mostrarErro("Erro ao registrar saída"); }
+    }
+
+    function toggleFiltros() {
+        filtrosVisiveis = !filtrosVisiveis;
+        document.getElementById("painelFiltros").style.display =
+            filtrosVisiveis ? "block" : "none";
+        document.getElementById("iconeFiltro").textContent =
+            filtrosVisiveis ? "▲ Recolher" : "▼ Expandir";
+    }
+
+    async function carregarEquipamentos() {
+        try {
+            const r = await fetch(`${API_URL}/api/equipamentos/`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            todosEquipamentos = await r.json();
+
+            const categorias = [...new Set(
+                todosEquipamentos.map(e => e.categoria).filter(Boolean)
+            )].sort();
+
+            const selectCat = document.getElementById("filtroCategoria");
+            selectCat.innerHTML = '<option value="">Todas</option>';
+            categorias.forEach(cat => {
+                selectCat.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+
+            const fornecedores = [...new Map(
+                todosEquipamentos
+                    .filter(e => e.id_fornecedor)
+                    .map(e => [e.id_fornecedor, e.fornecedor_nome])
+            ).entries()];
+
+            const selectForn = document.getElementById("filtroFornecedor");
+            selectForn.innerHTML = '<option value="">Todos</option>';
+            fornecedores.forEach(([id, nome]) => {
+                selectForn.innerHTML += `<option value="${id}">${nome}</option>`;
+            });
+
+            aplicarFiltros();
+        } catch (e) { console.error(e); }
+    }
+
+    function aplicarFiltros() {
+        const busca      = document.getElementById("filtroBusca").value.toLowerCase();
+        const categoria  = document.getElementById("filtroCategoria").value;
+        const status     = document.getElementById("filtroStatus").value;
+        const fornecedor = document.getElementById("filtroFornecedor").value;
+        const estoque    = document.getElementById("filtroEstoque").value;
+        const ordem      = document.getElementById("filtroOrdem").value;
+
+        let resultado = [...todosEquipamentos];
+
+        if (busca) {
+            resultado = resultado.filter(eq =>
+                eq.nome.toLowerCase().includes(busca) ||
+                (eq.numero_patrimonio && eq.numero_patrimonio.toLowerCase().includes(busca)) ||
+                (eq.codigo_barras && eq.codigo_barras.toLowerCase().includes(busca))
+            );
+        }
+        if (categoria)  resultado = resultado.filter(eq => eq.categoria === categoria);
+        if (status)     resultado = resultado.filter(eq => eq.status === status);
+        if (fornecedor) resultado = resultado.filter(eq =>
+            String(eq.id_fornecedor) === String(fornecedor));
+
+        if (estoque === "baixo") {
+            resultado = resultado.filter(eq =>
+                eq.quantidade > 0 && eq.quantidade <= eq.quantidade_minima);
+        } else if (estoque === "zerado") {
+            resultado = resultado.filter(eq => eq.quantidade === 0);
+        } else if (estoque === "ok") {
+            resultado = resultado.filter(eq => eq.quantidade > eq.quantidade_minima);
+        }
+
+        resultado.sort((a, b) => {
+            switch (ordem) {
+                case "nome":          return a.nome.localeCompare(b.nome);
+                case "nome_desc":     return b.nome.localeCompare(a.nome);
+                case "quantidade":    return a.quantidade - b.quantidade;
+                case "quantidade_desc": return b.quantidade - a.quantidade;
+                case "categoria":     return (a.categoria||"").localeCompare(b.categoria||"");
+                default: return 0;
+            }
+        });
+
+        document.getElementById("contadorResultados").textContent =
+            `${resultado.length} equipamento(s) encontrado(s)`;
+        renderizarTabela(resultado);
+    }
+
+    function limparFiltros() {
+        document.getElementById("filtroBusca").value      = "";
+        document.getElementById("filtroCategoria").value  = "";
+        document.getElementById("filtroStatus").value     = "";
+        document.getElementById("filtroFornecedor").value = "";
+        document.getElementById("filtroEstoque").value    = "";
+        document.getElementById("filtroOrdem").value      = "nome";
+        aplicarFiltros();
+    }
+
+    function renderizarTabela(equipamentos) {
+        const tbody = document.getElementById("tabelaEquipamentos");
+        if (equipamentos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7"
+                style="text-align:center;color:#8892a4;padding:2rem;">
+                Nenhum equipamento encontrado</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = equipamentos.map(eq => `
+            <tr>
+                <td><strong>${eq.nome}</strong></td>
+                <td style="color:#8892a4;">${eq.categoria || "-"}</td>
+                <td>
+                    ${eq.codigo_barras
+                        ? `<span style="font-family:monospace;
+                                       background:rgba(79,142,247,0.1);
+                                       padding:0.2rem 0.5rem;
+                                       border-radius:4px;
+                                       font-size:0.82rem;
+                                       color:#4f8ef7;">
+                                📷 ${eq.codigo_barras}
+                           </span>`
+                        : '<span style="color:#8892a4;">-</span>'}
+                        </td>
+                <td>
+                    <span style="color:${eq.quantidade === 0 ? '#ef4444' :
+                                        eq.quantidade <= eq.quantidade_minima
+                                        ? '#f59e0b' : '#e2e8f0'};font-weight:600;">
+                        ${eq.quantidade}
+                        ${eq.quantidade === 0 ? ' 🔴' :
+                          eq.quantidade <= eq.quantidade_minima ? ' ⚠️' : ''}
+                    </span>
+                </td>
+                <td>${badgeStatus(eq.status)}</td>
+                <td style="color:#8892a4;">${eq.fornecedor_nome || "-"}</td>
+                <td>
+                    <div style="display:flex;gap:0.3rem;">
+                        ${usuario.perfil !== "visitante" ? `
+                            <button class="btn btn-warning"
+                                onclick="editarEquipamento(${eq.id})"
+                                style="padding:0.3rem 0.6rem;font-size:0.8rem;">✏️</button>
+                            ${usuario.perfil === "admin" ? `
+                                <button class="btn btn-danger"
+                                    onclick="deletarEquipamento(${eq.id},'${eq.nome}')"
+                                    style="padding:0.3rem 0.6rem;font-size:0.8rem;">🗑️</button>
+                            ` : ""}
+                        ` : "-"}
+                    </div>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    function badgeStatus(status) {
+        const b = {
+            "disponivel": '<span class="badge badge-verde">✅ Disponível</span>',
+            "em_uso":     '<span class="badge badge-azul">📤 Em Uso</span>',
+            "manutencao": '<span class="badge badge-amarelo">🔧 Manutenção</span>',
+            "inativo":    '<span class="badge badge-cinza">⛔ Inativo</span>'
+        };
+        return b[status] || status;
+    }
+
+    async function abrirModal(id = null) {
+        document.getElementById("equipamentoId").value  = "";
+        document.getElementById("nome").value           = "";
+        document.getElementById("descricao").value      = "";
+        document.getElementById("patrimonio").value     = "";
+        document.getElementById("categoria").value      = "";
+        document.getElementById("codigoBarras").value   = "";
+        document.getElementById("quantidade").value     = "0";
+        document.getElementById("qtdMinima").value      = "5";
+        document.getElementById("status").value         = "disponivel";
+        document.getElementById("localizacao").value    = "";
+        document.getElementById("modalTitulo").textContent =
+            id ? "Editar Equipamento" : "Novo Equipamento";
+
+        await carregarFornecedores();
+
+        if (id) {
+            const eq = todosEquipamentos.find(e => e.id === id);
+            if (eq) {
+                document.getElementById("equipamentoId").value  = eq.id;
+                document.getElementById("nome").value           = eq.nome || "";
+                document.getElementById("descricao").value      = eq.descricao || "";
+                document.getElementById("patrimonio").value     = eq.numero_patrimonio || "";
+                document.getElementById("categoria").value      = eq.categoria || "";
+                document.getElementById("codigoBarras").value   = eq.codigo_barras || "";
+                document.getElementById("quantidade").value     = eq.quantidade;
+                document.getElementById("qtdMinima").value      = eq.quantidade_minima;
+                document.getElementById("status").value         = eq.status;
+                document.getElementById("localizacao").value    = eq.localizacao || "";
+                document.getElementById("fornecedor").value     = eq.id_fornecedor || "";
+            }
+        }
+        document.getElementById("modalOverlay").classList.add("ativo");
+    }
+
+    function fecharModal() {
+        document.getElementById("modalOverlay").classList.remove("ativo");
+    }
+
+    async function carregarFornecedores() {
+        const r = await fetch(`${API_URL}/api/fornecedores/`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const fornecedores = await r.json();
+        const select = document.getElementById("fornecedor");
+        select.innerHTML = '<option value="">-- Selecione --</option>';
+        fornecedores.forEach(f => {
+            select.innerHTML += `<option value="${f.id}">${f.nome}</option>`;
+        });
+    }
+
+    async function salvarEquipamento() {
+        const id = document.getElementById("equipamentoId").value;
+        const dados = {
+            nome:              document.getElementById("nome").value,
+            descricao:         document.getElementById("descricao").value,
+            numero_patrimonio: document.getElementById("patrimonio").value,
+            categoria:         document.getElementById("categoria").value,
+            codigo_barras:     document.getElementById("codigoBarras").value || null,
+            quantidade:        parseInt(document.getElementById("quantidade").value),
+            quantidade_minima: parseInt(document.getElementById("qtdMinima").value),
+            status:            document.getElementById("status").value,
+            localizacao:       document.getElementById("localizacao").value,
+            id_fornecedor:     document.getElementById("fornecedor").value || null
+        };
+
+        const url    = id ? `${API_URL}/api/equipamentos/${id}`
+                  : `${API_URL}/api/equipamentos/`;
+        const metodo = id ? "PUT" : "POST";
+
+        try {
+            const r = await fetch(url, {
+                method: metodo,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(dados)
+            });
+            const resultado = await r.json();
+            if (r.ok) {
+                mostrarSucesso(resultado.mensagem);
+                fecharModal();
+                carregarEquipamentos();
+            } else mostrarErro(resultado.erro);
+        } catch (e) { mostrarErro("Erro ao salvar equipamento"); }
+    }
+
+    function editarEquipamento(id) { abrirModal(id); }
+
+    async function deletarEquipamento(id, nome) {
+        if (!confirm(`Remover "${nome}"?`)) return;
+        try {
+            const r = await fetch(`${API_URL}/api/equipamentos/${id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const resultado = await r.json();
+            if (r.ok) { mostrarSucesso(resultado.mensagem); carregarEquipamentos(); }
+            else mostrarErro(resultado.erro);
+        } catch (e) { mostrarErro("Erro ao deletar"); }
+    }
+
+    function mostrarSucesso(msg) {
+        const el = document.getElementById("msgSucesso");
+        el.textContent = "✅ " + msg;
+        el.style.display = "flex";
+        setTimeout(() => el.style.display = "none", 3000);
+    }
+
+    function mostrarErro(msg) {
+        const el = document.getElementById("msgErro");
+        el.textContent = "❌ " + msg;
+        el.style.display = "flex";
+        setTimeout(() => el.style.display = "none", 4000);
+    }
+
+    function sair() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        window.location.href = "login.html";
+    }
+
+    carregarEquipamentos();
+</script>
+
+</body>
+</html>

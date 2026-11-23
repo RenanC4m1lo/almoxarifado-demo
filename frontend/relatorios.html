@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios - Sistema Almoxarifado</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div style="width:36px;height:36px;background:rgba(79,142,247,0.2);
+                border-radius:8px;display:flex;align-items:center;
+                justify-content:center;font-size:1.2rem;">📦</div>
+            <div>
+                <h2>Almoxarifado</h2>
+                <p>Sistema de Estoque</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="dashboard.html"><span>📊</span> Dashboard</a>
+            <a href="equipamentos.html"><span>🔧</span> Cadastro de Equipamentos</a>
+            <a href="unidades.html"><span>📷</span> Unidades</a>
+            <a href="movimentacoes.html"><span>🔄</span> Movimentações</a>
+            <a href="fornecedores.html"><span>🏭</span> Fornecedores</a>
+            <a href="tecnicos.html" id="linkTecnicos"><span>👷</span> Técnicos</a>
+            <a href="relatorios.html" class="ativo"><span>📄</span> Relatórios</a>
+            <a href="usuarios.html"><span>👥</span> Usuários</a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="avatar" id="avatarLetra">A</div>
+            <div class="sidebar-user-info">
+                <p id="sidebarNome">Usuário</p>
+                <span id="sidebarPerfil">Administrador</span>
+            </div>
+        </div>
+
+        <div style="padding:0.75rem 1rem;padding-top:0;">
+            <button class="btn btn-danger" onclick="sair()"
+                style="width:100%;justify-content:center;">
+                🚪 Sair
+            </button>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO -->
+    <div class="main-content">
+
+        <div class="topbar">
+            <h1>Relatórios</h1>
+           <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
+    <div id="seletorEmpresa" style="position:relative;">
+    <button id="btnEmpresa" onclick="toggleDropdownEmpresa()" style="
+        color:#8892a4;font-size:0.82rem;
+        padding:0.3rem 0.75rem;
+        background:rgba(79,142,247,0.08);
+        border:1px solid rgba(79,142,247,0.15);
+        border-radius:999px;white-space:nowrap;
+        cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+        <span id="nomeEmpresa"></span>
+        <span id="setaEmpresa" style="display:none;">▾</span>
+    </button>
+    <div id="dropdownEmpresa" style="display:none;position:absolute;top:110%;right:0;
+        background:#1a1f2e;border:1px solid rgba(79,142,247,0.2);
+        border-radius:8px;min-width:160px;z-index:50;overflow:hidden;">
+    </div>
+</div>
+    <div class="badge-online" style="white-space:nowrap;">Sistema Online</div>
+</div>
+        </div>
+
+        <div class="page-content">
+
+            <div id="msgSucesso" class="alerta alerta-sucesso" style="display:none;"></div>
+            <div id="msgErro"    class="alerta alerta-erro"    style="display:none;"></div>
+
+            <!-- Cards de relatórios -->
+            <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
+
+                <!-- Relatório de Estoque -->
+                <div class="card" style="text-align:center;padding:2.5rem 2rem;">
+                    <div style="
+                        width:72px;height:72px;
+                        background:rgba(79,142,247,0.15);
+                        border:1px solid rgba(79,142,247,0.2);
+                        border-radius:16px;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:2rem;
+                        margin:0 auto 1.25rem;">
+                        📦
+                    </div>
+                    <h3 style="color:#e2e8f0;font-size:1rem;margin-bottom:0.5rem;">
+                        Relatório de Estoque
+                    </h3>
+                    <p style="color:#8892a4;font-size:0.82rem;margin-bottom:1.5rem;line-height:1.6;">
+                        Lista completa de todos os equipamentos com quantidades,
+                        status e fornecedores
+                    </p>
+                    <button class="btn btn-primary" onclick="gerarRelatorio('estoque')"
+                        id="btnEstoque" style="margin:0 auto;">
+                        📥 Baixar PDF
+                    </button>
+                </div>
+
+                 <!-- Relatório de Movimentações -->
+                <div class="card" style="text-align:center;padding:2.5rem 2rem;">
+                    <div style="
+                        width:72px;height:72px;
+                        background:rgba(34,197,94,0.15);
+                        border:1px solid rgba(34,197,94,0.2);
+                        border-radius:16px;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:2rem;
+                        margin:0 auto 1.25rem;">
+                        🔄
+                    </div>
+                    <h3 style="color:#e2e8f0;font-size:1rem;margin-bottom:0.5rem;">
+                        Relatório de Movimentações
+                    </h3>
+                    <p style="color:#8892a4;font-size:0.82rem;margin-bottom:1.5rem;line-height:1.6;">
+                        Histórico completo de saídas e devoluções
+                        dos últimos 100 registros
+                    </p>
+                    <button class="btn btn-success" onclick="gerarRelatorio('movimentacoes')"
+                        id="btnMovimentacoes" style="margin:0 auto;width:auto;">
+                        📥 Baixar PDF
+                    </button>
+                </div>
+
+                <!-- Relatório por Técnico -->
+                <div class="card" style="text-align:center;padding:2.5rem 2rem;">
+                    <div style="
+                        width:72px;height:72px;
+                        background:rgba(245,158,11,0.15);
+                        border:1px solid rgba(245,158,11,0.2);
+                        border-radius:16px;
+                        display:flex;align-items:center;
+                        justify-content:center;font-size:2rem;
+                        margin:0 auto 1.25rem;">
+                        👤
+                    </div>
+                    <h3 style="color:#e2e8f0;font-size:1rem;margin-bottom:0.5rem;">
+                        Materiais por Técnico
+                    </h3>
+                    <p style="color:#8892a4;font-size:0.82rem;margin-bottom:1rem;line-height:1.6;">
+                        Quantidade de materiais retirados por técnico em um mês
+                    </p>
+
+                    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+                        <select id="mesTecnico" style="
+                            flex:1;padding:0.5rem;border-radius:8px;
+                            background:rgba(255,255,255,0.05);
+                            border:1px solid rgba(255,255,255,0.1);
+                            color:#e2e8f0;font-size:0.82rem;">
+                        </select>
+                        <select id="filtroTecnico" style="
+                            flex:1;padding:0.5rem;border-radius:8px;
+                            background:rgba(255,255,255,0.05);
+                            border:1px solid rgba(255,255,255,0.1);
+                            color:#e2e8f0;font-size:0.82rem;">
+                            <option value="" style="background:#1a1f2e;color:#e2e8f0;">Todos os técnicos</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-warning" onclick="gerarRelatorioTecnico()"
+                        id="btnTecnicos" style="margin:0 auto;">
+                        📥 Baixar PDF
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Informações -->
+            <div class="card" style="margin-top:1.5rem;">
+                <div class="card-header">
+                    <h2>ℹ️ Sobre os Relatórios</h2>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:1rem;">
+
+                    <div style="display:flex;gap:1rem;align-items:flex-start;">
+                        <div style="
+                            width:40px;height:40px;flex-shrink:0;
+                            background:rgba(79,142,247,0.1);
+                            border-radius:8px;display:flex;
+                            align-items:center;justify-content:center;font-size:1.2rem;">
+                            📦
+                        </div>
+                        <div>
+                            <p style="font-weight:600;color:#e2e8f0;font-size:0.9rem;">
+                                Relatório de Estoque
+                            </p>
+                            <p style="color:#8892a4;font-size:0.82rem;margin-top:0.2rem;">
+                                Exibe todos os equipamentos com nome, categoria,
+                                quantidade atual, mínima, status e fornecedor.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:1rem;align-items:flex-start;">
+                        <div style="
+                            width:40px;height:40px;flex-shrink:0;
+                            background:rgba(34,197,94,0.1);
+                            border-radius:8px;display:flex;
+                            align-items:center;justify-content:center;font-size:1.2rem;">
+                            🔄
+                        </div>
+                        <div>
+                            <p style="font-weight:600;color:#e2e8f0;font-size:0.9rem;">
+                                Relatório de Movimentações
+                            </p>
+                            <p style="color:#8892a4;font-size:0.82rem;margin-top:0.2rem;">
+                                Exibe o histórico das últimas 100 movimentações com tipo,
+                                equipamento, quantidade, responsável e data.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:1rem;align-items:flex-start;">
+                        <div style="
+                            width:40px;height:40px;flex-shrink:0;
+                            background:rgba(245,158,11,0.1);
+                            border-radius:8px;display:flex;
+                            align-items:center;justify-content:center;font-size:1.2rem;">
+                            📅
+                        </div>
+                        <div>
+                            <p style="font-weight:600;color:#e2e8f0;font-size:0.9rem;">
+                                Data de Geração
+                            </p>
+                            <p style="color:#8892a4;font-size:0.82rem;margin-top:0.2rem;">
+                                Todos os relatórios incluem a data e hora de geração
+                                no topo do documento PDF.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script src="js/config.js"></script>
+<script>
+    const token   = localStorage.getItem("token");
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    if (!token) window.location.href = "login.html";
+
+    const nome = usuario.nome || "Usuário";
+    document.getElementById("sidebarNome").textContent = nome;
+    document.getElementById("avatarLetra").textContent = nome.charAt(0).toUpperCase();
+    const perfis = { admin:"Administrador", operador:"Operador", visitante:"Visitante" };
+    document.getElementById("sidebarPerfil").textContent = perfis[usuario.perfil] || usuario.perfil;
+    if (usuario.perfil !== "admin") {
+        const linkTecnicos = document.getElementById("linkTecnicos");
+        if (linkTecnicos) linkTecnicos.style.display = "none";
+    }
+    // Mostra o nome da empresa no topbar
+document.getElementById("nomeEmpresa").textContent =
+    "🏢 " + (usuario.empresa_nome || "");
+    // ============================================================
+    // Troca de empresa (só Super Admin)
+    // ============================================================
+    const empresasDisponiveis = [
+        { id: 1, nome: "Matriz" },
+        { id: 2, nome: "Filial" }
+    ];
+
+    if (usuario.acesso_todas) {
+        document.getElementById("setaEmpresa").style.display = "inline";
+        montarDropdownEmpresa();
+    } else {
+        document.getElementById("btnEmpresa").style.cursor = "default";
+    }
+
+    function montarDropdownEmpresa() {
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.innerHTML = empresasDisponiveis.map(e => `
+            <div onclick="trocarEmpresa(${e.id})" style="
+                padding:0.6rem 1rem;cursor:pointer;font-size:0.85rem;
+                color:#e2e8f0;"
+                onmouseover="this.style.background='rgba(79,142,247,0.1)'"
+                onmouseout="this.style.background='transparent'">
+                ${e.nome}
+            </div>
+        `).join("");
+    }
+
+    function toggleDropdownEmpresa() {
+        if (!usuario.acesso_todas) return;
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    }
+
+    async function trocarEmpresa(idEmpresa) {
+        if (idEmpresa === usuario.id_empresa) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+            return;
+        }
+        try {
+            const resposta = await fetch(`${API_URL}/api/auth/trocar-empresa`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ id_empresa: idEmpresa })
+            });
+            const dados = await resposta.json();
+            if (resposta.ok) {
+                localStorage.setItem("token", dados.token);
+                localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+                window.location.reload();
+            } else {
+                alert("Erro ao trocar de empresa: " + dados.erro);
+            }
+        } catch (e) {
+            alert("Erro ao conectar com o servidor.");
+        }
+    }
+
+    // Fecha o dropdown se clicar fora dele
+    document.addEventListener("click", (e) => {
+        const seletor = document.getElementById("seletorEmpresa");
+        if (seletor && !seletor.contains(e.target)) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+        }
+    });
+
+// Preenche o seletor de mês com os últimos 12 meses
+    function preencherMeses() {
+        const select = document.getElementById("mesTecnico");
+        const nomesMeses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                             "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+        const hoje = new Date();
+
+        for (let i = 0; i < 12; i++) {
+            const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+            const mes = d.getMonth() + 1;
+            const ano = d.getFullYear();
+            const option = document.createElement("option");
+            option.value = `${mes}-${ano}`;
+            option.textContent = `${nomesMeses[d.getMonth()]} de ${ano}`;
+            option.style.background = "#1a1f2e";
+            option.style.color = "#e2e8f0";
+            select.appendChild(option);
+        }
+    }
+
+    // Busca os técnicos (nomes usados no campo "Responsável" das movimentações)
+    async function preencherTecnicos() {
+        try {
+            const r = await fetch(`${API_URL}/api/movimentacoes/`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const movimentacoes = await r.json();
+
+            const nomes = [...new Set(
+                movimentacoes
+                    .filter(m => m.tipo === "saida" && m.responsavel)
+                    .map(m => m.responsavel.trim())
+            )].sort();
+
+            const select = document.getElementById("filtroTecnico");
+            nomes.forEach(nome => {
+                const option = document.createElement("option");
+                option.value = nome;
+                option.textContent = nome;
+                option.style.background = "#1a1f2e";
+                option.style.color = "#e2e8f0";
+                select.appendChild(option);
+            });
+        } catch (e) {
+            console.error("Erro ao carregar técnicos:", e);
+        }
+    }
+
+    preencherMeses();
+    preencherTecnicos();
+
+    async function gerarRelatorioTecnico() {
+        const btn = document.getElementById("btnTecnicos");
+        btn.textContent = "⏳ Gerando...";
+        btn.disabled = true;
+
+        try {
+            const [mes, ano] = document.getElementById("mesTecnico").value.split("-");
+            const tecnico = document.getElementById("filtroTecnico").value;
+
+            let url = `${API_URL}/api/relatorios/tecnicos?mes=${mes}&ano=${ano}`;
+            if (tecnico) url += `&responsavel=${encodeURIComponent(tecnico)}`;
+
+            const r = await fetch(url, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (r.ok) {
+                const blob = await r.blob();
+                const urlBlob = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = urlBlob;
+                link.download = `relatorio_tecnicos_${mes}_${ano}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(urlBlob);
+                mostrarSucesso("Relatório gerado com sucesso!");
+            } else {
+                mostrarErro("Erro ao gerar relatório");
+            }
+        } catch (e) {
+            mostrarErro("Não foi possível gerar o relatório");
+        }
+
+        btn.textContent = "📥 Baixar PDF";
+        btn.disabled = false;
+    }
+
+    async function gerarRelatorio(tipo) {
+        const btnId = tipo === "estoque" ? "btnEstoque" : "btnMovimentacoes";
+        const btn   = document.getElementById(btnId);
+
+        btn.textContent = "⏳ Gerando...";
+        btn.disabled = true;
+
+        try {
+            const r = await fetch(`${API_URL}/api/relatorios/${tipo}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (r.ok) {
+                const blob = await r.blob();
+                const url  = window.URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href  = url;
+                link.download = `relatorio_${tipo}_${
+                    new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')
+                }.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                mostrarSucesso("Relatório gerado com sucesso!");
+            } else {
+                mostrarErro("Erro ao gerar relatório");
+            }
+        } catch (e) {
+            mostrarErro("Não foi possível gerar o relatório");
+        }
+
+        btn.textContent = "📥 Baixar PDF";
+        btn.disabled = false;
+    }
+
+    function mostrarSucesso(msg) {
+        const el = document.getElementById("msgSucesso");
+        el.textContent = "✅ " + msg;
+        el.style.display = "flex";
+        setTimeout(() => el.style.display = "none", 3000);
+    }
+
+    function mostrarErro(msg) {
+        const el = document.getElementById("msgErro");
+        el.textContent = "❌ " + msg;
+        el.style.display = "flex";
+        setTimeout(() => el.style.display = "none", 4000);
+    }
+
+    function sair() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        window.location.href = "login.html";
+    }
+</script>
+
+</body>
+</html>

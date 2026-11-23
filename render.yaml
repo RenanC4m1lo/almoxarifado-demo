@@ -1,0 +1,22 @@
+databases:
+  - name: almoxarifado-demo-db
+    plan: free
+    databaseName: almoxarifado_demo
+    user: almoxarifado
+
+services:
+  - type: web
+    name: almoxarifado-demo
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "cd backend && waitress-serve --host=0.0.0.0 --port=$PORT app:app"
+    envVars:
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: almoxarifado-demo-db
+          property: connectionString

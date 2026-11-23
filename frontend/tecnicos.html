@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Técnicos - Sistema Almoxarifado</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div style="width:36px;height:36px;background:rgba(79,142,247,0.2);
+                border-radius:8px;display:flex;align-items:center;
+                justify-content:center;font-size:1.2rem;">📦</div>
+            <div>
+                <h2>Almoxarifado</h2>
+                <p>Sistema de Estoque</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="dashboard.html"><span>📊</span> Dashboard</a>
+            <a href="equipamentos.html"><span>🔧</span> Cadastro de Equipamentos</a>
+            <a href="unidades.html"><span>📷</span> Unidades</a>
+            <a href="movimentacoes.html"><span>🔄</span> Movimentações</a>
+            <a href="fornecedores.html"><span>🏭</span> Fornecedores</a>
+            <a href="tecnicos.html" id="linkTecnicos" class="ativo"><span>👷</span> Técnicos</a>
+            <a href="relatorios.html"><span>📄</span> Relatórios</a>
+            <a href="usuarios.html"><span>👥</span> Usuários</a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="avatar" id="avatarLetra">A</div>
+            <div class="sidebar-user-info">
+                <p id="sidebarNome">Usuário</p>
+                <span id="sidebarPerfil">Administrador</span>
+            </div>
+        </div>
+
+        <div style="padding:0.75rem 1rem;padding-top:0;">
+            <button class="btn btn-danger" onclick="sair()"
+                style="width:100%;justify-content:center;">
+                🚪 Sair
+            </button>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO -->
+    <div class="main-content">
+
+        <div class="topbar">
+            <h1>Técnicos</h1>
+           <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
+    <div id="seletorEmpresa" style="position:relative;">
+    <button id="btnEmpresa" onclick="toggleDropdownEmpresa()" style="
+        color:#8892a4;font-size:0.82rem;
+        padding:0.3rem 0.75rem;
+        background:rgba(79,142,247,0.08);
+        border:1px solid rgba(79,142,247,0.15);
+        border-radius:999px;white-space:nowrap;
+        cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+        <span id="nomeEmpresa"></span>
+        <span id="setaEmpresa" style="display:none;">▾</span>
+    </button>
+    <div id="dropdownEmpresa" style="display:none;position:absolute;top:110%;right:0;
+        background:#1a1f2e;border:1px solid rgba(79,142,247,0.2);
+        border-radius:8px;min-width:160px;z-index:50;overflow:hidden;">
+    </div>
+</div>
+    <div class="badge-online" style="white-space:nowrap;">Sistema Online</div>
+</div>
+        </div>
+
+        <div class="page-content">
+
+            <div id="msgSucesso" class="alerta alerta-sucesso" style="display:none;"></div>
+            <div id="msgErro"    class="alerta alerta-erro"    style="display:none;"></div>
+
+            <!-- Aviso para não admins -->
+            <div id="avisoPermissao" class="alerta alerta-aviso" style="display:none;">
+                ⚠️ Apenas administradores podem gerenciar técnicos.
+            </div>
+
+            <div class="card" id="cardTecnicos">
+                <div class="card-header">
+                    <h2>Lista de Técnicos</h2>
+                    <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;">
+                        <input type="text" id="buscaTecnicos"
+                            placeholder="🔍 Buscar por nome ou telefone..."
+                            oninput="aplicarFiltroTecnicos()"
+                            style="padding:0.5rem 1rem;min-width:240px;
+                                   background:#1e2235;
+                                   border:1.5px solid #2a2d3e;
+                                   border-radius:8px;color:#e2e8f0;
+                                   font-family:inherit;font-size:0.875rem;">
+                        <button class="btn btn-primary" onclick="abrirModal()"
+                            id="btnNovo" style="white-space:nowrap;">
+                            ➕ Novo Técnico
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaTecnicos">
+                            <tr><td colspan="4"
+                                style="text-align:center;color:#8892a4;padding:2rem;">
+                                Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Novo Técnico</h3>
+            <button class="btn-fechar" onclick="fecharModal()">×</button>
+        </div>
+
+        <input type="hidden" id="tecnicoId">
+
+        <div class="form-group">
+            <label>Nome *</label>
+            <input type="text" id="nome" placeholder="Nome do técnico">
+        </div>
+
+        <div class="form-group">
+            <label>Telefone</label>
+            <input type="text" id="telefone" placeholder="(00) 00000-0000">
+        </div>
+
+        <div class="form-group">
+            <label>Status</label>
+            <select id="ativo">
+                <option value="1">✅ Ativo</option>
+                <option value="0">⛔ Inativo</option>
+            </select>
+        </div>
+
+        <div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:0.5rem;">
+            <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+            <button class="btn btn-primary" onclick="salvarTecnico()"
+                style="width:auto;">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+<script src="js/config.js"></script>
+<script>
+    const token   = localStorage.getItem("token");
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    if (!token) window.location.href = "login.html";
+
+    const nome = usuario.nome || "Usuário";
+    document.getElementById("sidebarNome").textContent = nome;
+    document.getElementById("avatarLetra").textContent = nome.charAt(0).toUpperCase();
+    const perfis = { admin:"Administrador", operador:"Operador", visitante:"Visitante" };
+    document.getElementById("sidebarPerfil").textContent = perfis[usuario.perfil] || usuario.perfil;
+    if (usuario.perfil !== "admin") {
+        const linkTecnicos = document.getElementById("linkTecnicos");
+        if (linkTecnicos) linkTecnicos.style.display = "none";
+    }
+    // Mostra o nome da empresa no topbar
+document.getElementById("nomeEmpresa").textContent =
+    "🏢 " + (usuario.empresa_nome || "");
+    // ============================================================
+    // Troca de empresa (só Super Admin)
+    // ============================================================
+    const empresasDisponiveis = [
+        { id: 1, nome: "Matriz" },
+        { id: 2, nome: "Filial" }
+    ];
+
+    if (usuario.acesso_todas) {
+        document.getElementById("setaEmpresa").style.display = "inline";
+        montarDropdownEmpresa();
+    } else {
+        document.getElementById("btnEmpresa").style.cursor = "default";
+    }
+
+    function montarDropdownEmpresa() {
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.innerHTML = empresasDisponiveis.map(e => `
+            <div onclick="trocarEmpresa(${e.id})" style="
+                padding:0.6rem 1rem;cursor:pointer;font-size:0.85rem;
+                color:#e2e8f0;"
+                onmouseover="this.style.background='rgba(79,142,247,0.1)'"
+                onmouseout="this.style.background='transparent'">
+                ${e.nome}
+            </div>
+        `).join("");
+    }
+
+    function toggleDropdownEmpresa() {
+        if (!usuario.acesso_todas) return;
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    }
+
+    async function trocarEmpresa(idEmpresa) {
+        if (idEmpresa === usuario.id_empresa) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+            return;
+        }
+        try {
+            const resposta = await fetch(`${API_URL}/api/auth/trocar-empresa`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ id_empresa: idEmpresa })
+            });
+            const dados = await resposta.json();
+            if (resposta.ok) {
+                localStorage.setItem("token", dados.token);
+                localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+                window.location.reload();
+            } else {
+                alert("Erro ao trocar de empresa: " + dados.erro);
+            }
+        } catch (e) {
+            alert("Erro ao conectar com o servidor.");
+        }
+    }
+
+    // Fecha o dropdown se clicar fora dele
+    document.addEventListener("click", (e) => {
+        const seletor = document.getElementById("seletorEmpresa");
+        if (seletor && !seletor.contains(e.target)) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+        }
+    });
+
+    // Se não for admin, mostra aviso e esconde a tabela
+    if (usuario.perfil !== "admin") {
+        document.getElementById("avisoPermissao").style.display = "flex";
+        document.getElementById("cardTecnicos").style.display = "none";
+    }
+
+    let todosTecnicos = [];
+
+    async function carregarTecnicos() {
+        if (usuario.perfil !== "admin") return;
+
+        try {
+            const r = await fetch(`${API_URL}/api/tecnicos/`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            todosTecnicos = await r.json();
+            aplicarFiltroTecnicos();
+        } catch (e) { console.error(e); }
+    }
+
+    function aplicarFiltroTecnicos() {
+        const busca = document.getElementById("buscaTecnicos").value.trim().toLowerCase();
+
+        let resultado = todosTecnicos;
+        if (busca) {
+            resultado = resultado.filter(t =>
+                (t.nome || "").toLowerCase().includes(busca) ||
+                (t.telefone || "").toLowerCase().includes(busca));
+        }
+
+        renderizarTecnicos(resultado);
+    }
+
+    function renderizarTecnicos(lista) {
+        const tbody = document.getElementById("tabelaTecnicos");
+
+        if (lista.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4"
+                style="text-align:center;color:#8892a4;padding:2rem;">
+                Nenhum técnico encontrado</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = lista.map(t => `
+                <tr>
+                    <td><strong>${t.nome}</strong></td>
+                    <td style="color:#8892a4;">${t.telefone || "-"}</td>
+                    <td>
+                        <span class="badge ${t.ativo ? 'badge-verde' : 'badge-cinza'}">
+                            ${t.ativo ? '✅ Ativo' : '⛔ Inativo'}
+                        </span>
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:0.3rem;">
+                            <button class="btn btn-warning"
+                                onclick="editarTecnico(${t.id})"
+                                style="padding:0.3rem 0.6rem;font-size:0.8rem;">✏️</button>
+                            <button class="btn btn-danger"
+                                onclick="deletarTecnico(${t.id},'${t.nome}')"
+                                style="padding:0.3rem 0.6rem;font-size:0.8rem;">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join("");
+    }
+
+    function abrirModal(id = null) {
+        document.getElementById("tecnicoId").value = "";
+        document.getElementById("nome").value = "";
+        document.getElementById("telefone").value = "";
+        document.getElementById("ativo").value = "1";
+        document.getElementById("modalTitulo").textContent =
+            id ? "Editar Técnico" : "Novo Técnico";
+
+        if (id) {
+            const t = todosTecnicos.find(t => t.id === id);
+            if (t) {
+                document.getElementById("tecnicoId").value = t.id;
+                document.getElementById("nome").value = t.nome || "";
+                document.getElementById("telefone").value = t.telefone || "";
+                document.getElementById("ativo").value = t.ativo ? "1" : "0";
+            }
+        }
+        document.getElementById("modalOverlay").classList.add("ativo");
+    }
+
+    function fecharModal() {
+        document.getElementById("modalOverlay").classList.remove("ativo");
+    }
+
+    async function salvarTecnico() {
+        const id = document.getElementById("tecnicoId").value;
+        const dados = {
+            nome:     document.getElementById("nome").value,
+            telefone: document.getElementById("telefone").value,
+            ativo:    parseInt(document.getElementById("ativo").value)
+        };
+
+        if (!dados.nome) {
+            mostrarErro("Nome do técnico é obrigatório!");
+            return;
+        }
+
+        const url    = id ? `${API_URL}/api/tecnicos/${id}`
+                  : `${API_URL}/api/tecnicos/`;
+        const metodo = id ? "PUT" : "POST";
+
+        try {
+            const r = await fetch(url, {
+                method: metodo,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(dados)
+            });
+            const resultado = await r.json();
+            if (r.ok) {
+                mostrarSucesso(resultado.mensagem);
+                fecharModal();
+                carregarTecnicos();
+            } else mostrarErro(resultado.erro);
+        } catch (e) { mostrarErro("Erro ao salvar técnico"); }
+    }
+
+    function editarTecnico(id) { abrirModal(id); }
+
+    async function deletarTecnico(id, nome) {
+        if (!confirm(`Remover "${nome}"?`)) return;
+        try {
+            const r = await fetch(`${API_URL}/api/tecnicos/${id}`, {
+                method: "DELETE",
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            const resultado = await r.json();
+            if (r.ok) { mostrarSucesso(resultado.mensagem); carregarTecnicos(); }
+            else mostrarErro(resultado.erro);
+        } catch (e) { mostrarErro("Erro ao deletar técnico"); }
+    }
+
+    function mostrarSucesso(msg) {
+        const el = document.getElementById("msgSucesso");
+        el.textContent = "✅ " + msg;
+        el.style.display = "flex";
+        setTimeout(() => el.style.display = "none", 3000);
+    }
+
+    function mostrarErro(msg) {
+        const el = document.getElementById("msgErro");
+        el.textContent = "❌ " + msg;
+        el.style.display = "flex";
+        setTimeout(() => el.style.display = "none", 4000);
+    }
+
+    function sair() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        window.location.href = "login.html";
+    }
+
+    carregarTecnicos();
+</script>
+
+</body>
+</html>

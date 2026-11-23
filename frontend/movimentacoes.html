@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movimentações - Sistema Almoxarifado</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/styles/choices.min.css">
+    <style>
+        /* Tema escuro para o combobox de busca de equipamento (Choices.js) */
+        .choices__inner {
+            background: var(--bg-input) !important;
+            border: 1.5px solid var(--borda) !important;
+            border-radius: 8px !important;
+            min-height: unset !important;
+            padding: 0.6rem 0.8rem !important;
+        }
+        .choices.is-focused .choices__inner,
+        .choices.is-open .choices__inner {
+            border-color: var(--azul) !important;
+        }
+        .choices__list--single .choices__item,
+        .choices__placeholder {
+            color: var(--texto) !important;
+            opacity: 1 !important;
+        }
+        .choices__list--dropdown,
+        .choices__list[aria-expanded] {
+            background: var(--bg-card) !important;
+            border: 1.5px solid var(--borda) !important;
+            border-radius: 8px !important;
+            margin-top: 4px !important;
+        }
+        .choices__list--dropdown .choices__item--selectable,
+        .choices__list[aria-expanded] .choices__item--selectable {
+            color: var(--texto) !important;
+        }
+        .choices__list--dropdown .choices__item--selectable.is-highlighted,
+        .choices__list[aria-expanded] .choices__item--selectable.is-highlighted {
+            background: rgba(79, 142, 247, 0.15) !important;
+        }
+        .choices__input {
+            background: var(--bg-card) !important;
+            color: var(--texto) !important;
+        }
+
+        /* Lista de itens (equipamentos/unidades) dos modais de Saída e Devolução */
+        .itens-lista-mov { display:flex; flex-direction:column; gap:0.6rem; }
+        .linha-item-mov { display:flex; gap:0.5rem; align-items:flex-start; }
+        .linha-item-mov .input-busca-item {
+            width:100%; padding:0.6rem 2rem 0.6rem 0.8rem; background:var(--bg-input);
+            border:1.5px solid var(--borda); border-radius:8px; color:var(--texto);
+            font-family:inherit; font-size:0.9rem; outline:none;
+        }
+        .linha-item-mov .input-busca-item[readonly] {
+            cursor:pointer; background:rgba(79,142,247,0.08); border-color:rgba(79,142,247,0.35);
+        }
+        .linha-item-mov .seta-item-mov {
+            position:absolute; right:0.8rem; top:50%; transform:translateY(-50%);
+            color:#8892a4; font-size:0.75rem; pointer-events:none;
+        }
+        .linha-item-mov .input-quantidade-item {
+            width:80px; flex-shrink:0; padding:0.6rem 0.5rem; background:var(--bg-input);
+            border:1.5px solid var(--borda); border-radius:8px; color:var(--texto);
+            font-family:inherit; font-size:0.9rem; outline:none;
+        }
+        .linha-item-mov .input-quantidade-item:disabled { opacity:0.4; }
+        .linha-item-mov .select-condicao-item {
+            flex-shrink:0; padding:0.6rem 0.5rem; background:var(--bg-input);
+            border:1.5px solid var(--borda); border-radius:8px; color:var(--texto);
+            font-family:inherit; font-size:0.8rem;
+        }
+        .linha-item-mov .btn-remover-linha {
+            flex-shrink:0; width:38px; height:38px; border-radius:8px;
+            background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25);
+            color:#f87171; cursor:pointer; font-size:0.9rem;
+        }
+        .sugestoes-item {
+            display:none; position:absolute; top:105%; left:0; right:0; z-index:40;
+            background:var(--bg-card); border:1.5px solid var(--borda); border-radius:8px;
+            max-height:220px; overflow-y:auto; margin-top:2px;
+        }
+        .sugestao-item {
+            padding:0.6rem 0.8rem; cursor:pointer; font-size:0.85rem; color:var(--texto);
+            border-bottom:1px solid rgba(255,255,255,0.05);
+        }
+        .sugestao-item:hover { background:rgba(79,142,247,0.12); }
+        .sugestao-vazia { padding:0.6rem 0.8rem; font-size:0.82rem; color:#8892a4; }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div style="width:36px;height:36px;background:rgba(79,142,247,0.2);
+                border-radius:8px;display:flex;align-items:center;
+                justify-content:center;font-size:1.2rem;">📦</div>
+            <div>
+                <h2>Almoxarifado</h2>
+                <p>Sistema de Estoque</p>
+            </div>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="dashboard.html"><span>📊</span> Dashboard</a>
+            <a href="equipamentos.html"><span>🔧</span> Cadastro de Equipamentos</a>
+            <a href="unidades.html"><span>📷</span> Unidades</a>
+            <a href="movimentacoes.html" class="ativo"><span>🔄</span> Movimentações</a>
+            <a href="fornecedores.html"><span>🏭</span> Fornecedores</a>
+            <a href="tecnicos.html" id="linkTecnicos"><span>👷</span> Técnicos</a>
+            <a href="relatorios.html"><span>📄</span> Relatórios</a>
+            <a href="usuarios.html"><span>👥</span> Usuários</a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="avatar" id="avatarLetra">A</div>
+            <div class="sidebar-user-info">
+                <p id="sidebarNome">Usuário</p>
+                <span id="sidebarPerfil">Administrador</span>
+            </div>
+        </div>
+
+        <div style="padding:0.75rem 1rem;padding-top:0;">
+            <button class="btn btn-danger" onclick="sair()"
+                style="width:100%;justify-content:center;">
+                🚪 Sair
+            </button>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO -->
+    <div class="main-content">
+
+        <div class="topbar">
+            <h1>Movimentações</h1>
+            <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
+    <div id="seletorEmpresa" style="position:relative;">
+    <button id="btnEmpresa" onclick="toggleDropdownEmpresa()" style="
+        color:#8892a4;font-size:0.82rem;
+        padding:0.3rem 0.75rem;
+        background:rgba(79,142,247,0.08);
+        border:1px solid rgba(79,142,247,0.15);
+        border-radius:999px;white-space:nowrap;
+        cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+        <span id="nomeEmpresa"></span>
+        <span id="setaEmpresa" style="display:none;">▾</span>
+    </button>
+    <div id="dropdownEmpresa" style="display:none;position:absolute;top:110%;right:0;
+        background:#1a1f2e;border:1px solid rgba(79,142,247,0.2);
+        border-radius:8px;min-width:160px;z-index:50;overflow:hidden;">
+    </div>
+</div>
+    <div class="badge-online" style="white-space:nowrap;">Sistema Online</div>
+</div>
+        </div>
+
+        <div class="page-content">
+
+            <div id="msgSucesso" class="alerta alerta-sucesso" style="display:none;"></div>
+            <div id="msgErro"    class="alerta alerta-erro"    style="display:none;"></div>
+
+            <!-- Botões de ação -->
+            <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;" id="botoesAcao">
+                <button class="btn btn-danger" onclick="abrirModalSaida()">
+                    📤 Registrar Saída
+                </button>
+                <button class="btn btn-success" onclick="abrirModalDevolucao()">
+                    📥 Registrar Devolução
+                </button>
+                <button class="btn btn-warning" onclick="abrirModalManutencaoLote()">
+                    🔧 Enviar para Manutenção
+                </button>
+            </div>
+
+            <!-- ============================================
+                 FILTROS AVANÇADOS
+                 ============================================ -->
+            <div class="card" style="margin-bottom:1.5rem;">
+                <div class="card-header" style="cursor:pointer;" onclick="toggleFiltros()">
+                    <h2>🔍 Filtros Avançados</h2>
+                    <span id="iconeFiltro" style="color:#8892a4;font-size:0.85rem;">
+                        ▼ Expandir
+                    </span>
+                </div>
+
+                <div id="painelFiltros" style="display:none;">
+                    <div style="display:grid;
+                                grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+                                gap:1rem;margin-bottom:1rem;">
+
+                        <!-- Busca por texto -->
+                        <div class="form-group" style="margin:0;">
+                            <label>Buscar</label>
+                            <input type="text" id="filtroBusca"
+                                placeholder="Equipamento ou responsável..."
+                                oninput="aplicarFiltros()">
+                        </div>
+
+                        <!-- Filtro por tipo -->
+                        <div class="form-group" style="margin:0;">
+                            <label>Tipo</label>
+                            <select id="filtroTipo" onchange="aplicarFiltros()">
+                                <option value="">Todos</option>
+                                <option value="saida">📤 Saída</option>
+                                <option value="devolucao">📥 Devolução</option>
+                                <option value="manutencao">🔧 Manutenção</option>
+                            </select>
+                        </div>
+
+                        <!-- Filtro por data inicial -->
+                        <div class="form-group" style="margin:0;">
+                            <label>Data Inicial</label>
+                            <input type="date" id="filtroDataInicio"
+                                onchange="aplicarFiltros()">
+                        </div>
+
+                        <!-- Filtro por data final -->
+                        <div class="form-group" style="margin:0;">
+                            <label>Data Final</label>
+                            <input type="date" id="filtroDataFim"
+                                onchange="aplicarFiltros()">
+                        </div>
+
+                        <!-- Ordenação -->
+                        <div class="form-group" style="margin:0;">
+                            <label>Ordenar por</label>
+                            <select id="filtroOrdem" onchange="aplicarFiltros()">
+                                <option value="recente">Mais recente</option>
+                                <option value="antigo">Mais antigo</option>
+                                <option value="equipamento">Equipamento A-Z</option>
+                                <option value="responsavel">Responsável A-Z</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <!-- Atalhos de período -->
+                    <div style="display:flex;gap:0.5rem;
+                                flex-wrap:wrap;margin-bottom:1rem;">
+                        <span style="color:#8892a4;font-size:0.82rem;
+                                     align-self:center;">Período rápido:</span>
+                        <button class="btn btn-secondary"
+                            onclick="filtrarPeriodo(7)"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;">
+                            Últimos 7 dias
+                        </button>
+                        <button class="btn btn-secondary"
+                            onclick="filtrarPeriodo(15)"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;">
+                            Últimos 15 dias
+                        </button>
+                        <button class="btn btn-secondary"
+                            onclick="filtrarPeriodo(30)"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;">
+                            Últimos 30 dias
+                        </button>
+                        <button class="btn btn-secondary"
+                            onclick="filtrarPeriodo(90)"
+                            style="padding:0.3rem 0.8rem;font-size:0.8rem;">
+                            Últimos 90 dias
+                        </button>
+                    </div>
+
+                    <div style="display:flex;align-items:center;
+                                justify-content:space-between;">
+                        <span id="contadorResultados"
+                            style="color:#8892a4;font-size:0.85rem;">
+                            0 movimentações encontradas
+                        </span>
+                        <button class="btn btn-secondary"
+                            onclick="limparFiltros()"
+                            style="padding:0.4rem 1rem;font-size:0.85rem;">
+                            🗑️ Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Histórico de Movimentações</h2>
+                    <span id="totalLabel" style="color:#8892a4;font-size:0.85rem;">
+                        0 registros
+                    </span>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Equipamento</th>
+                                <th>Quantidade</th>
+                                <th>Responsável</th>
+                                <th>Observação</th>
+                                <th>Dev. Prevista</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaMovimentacoes">
+                            <tr><td colspan="7"
+                                style="text-align:center;color:#8892a4;padding:2rem;">
+                                Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL SAÍDA -->
+<div class="modal-overlay" id="modalSaida">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>📤 Registrar Saída</h3>
+            <button class="btn-fechar" onclick="fecharModais()">×</button>
+        </div>
+
+        <div class="form-group">
+            <label>Equipamentos *</label>
+            <div class="itens-lista-mov" id="saidaItensLista"></div>
+            <button type="button" class="btn btn-secondary"
+                onclick="adicionarLinhaItem('saidaItensLista','saida')"
+                style="width:auto;padding:0.4rem 0.9rem;font-size:0.85rem;margin-top:0.5rem;">
+                ➕ Adicionar equipamento
+            </button>
+            <p style="color:#8892a4;font-size:0.78rem;margin-top:0.4rem;">
+                Digite o nome de um equipamento ou escaneie/digite o código de barras
+                de uma unidade específica.
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label>Responsável *</label>
+            <select id="saidaResponsavel">
+                <option value="">-- Selecione --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Observação</label>
+            <textarea id="saidaObservacao" rows="2"
+                placeholder="Motivo, projeto, etc."></textarea>
+        </div>
+
+        <div style="display:flex;gap:1rem;justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="fecharModais()">Cancelar</button>
+            <button class="btn btn-danger" onclick="registrarSaida()"
+                style="width:auto;">📤 Confirmar Saída</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DEVOLUÇÃO -->
+<div class="modal-overlay" id="modalDevolucao">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>📥 Registrar Devolução</h3>
+            <button class="btn-fechar" onclick="fecharModais()">×</button>
+        </div>
+
+        <div class="form-group">
+            <label>Equipamentos *</label>
+            <div class="itens-lista-mov" id="devItensLista"></div>
+            <button type="button" class="btn btn-secondary"
+                onclick="adicionarLinhaItem('devItensLista','devolucao')"
+                style="width:auto;padding:0.4rem 0.9rem;font-size:0.85rem;margin-top:0.5rem;">
+                ➕ Adicionar equipamento
+            </button>
+            <p style="color:#8892a4;font-size:0.78rem;margin-top:0.4rem;">
+                Digite o nome de um equipamento ou escaneie/digite o código de barras
+                de uma unidade específica (em uso ou em manutenção). Unidades individuais
+                mostram a condição de devolução - escolha "Boa" pra devolver ao estoque
+                disponível (inclusive equipamentos que acabaram de ser consertados).
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label>Responsável *</label>
+            <select id="devResponsavel">
+                <option value="">-- Selecione --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Observação</label>
+            <textarea id="devObservacao" rows="2"
+                placeholder="Condições, observações, etc."></textarea>
+        </div>
+
+        <div style="display:flex;gap:1rem;justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="fecharModais()">Cancelar</button>
+            <button class="btn btn-success" onclick="registrarDevolucao()"
+                style="width:auto;">📥 Confirmar Devolução</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL MANUTENÇÃO EM LOTE -->
+<div class="modal-overlay" id="modalManutencaoLote">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>🔧 Enviar para Manutenção</h3>
+            <button class="btn-fechar" onclick="fecharModais()">×</button>
+        </div>
+
+        <div class="form-group">
+            <label>Equipamentos *</label>
+            <div class="itens-lista-mov" id="manutencaoItensLista"></div>
+            <button type="button" class="btn btn-secondary"
+                onclick="adicionarLinhaItem('manutencaoItensLista','manutencao')"
+                style="width:auto;padding:0.4rem 0.9rem;font-size:0.85rem;margin-top:0.5rem;">
+                ➕ Adicionar equipamento
+            </button>
+            <p style="color:#8892a4;font-size:0.78rem;margin-top:0.4rem;">
+                Digite o nome de um equipamento ou escaneie/digite o código de barras
+                de uma unidade específica. Todos serão marcados como "Em Manutenção".
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label>Responsável *</label>
+            <select id="manutencaoResponsavel">
+                <option value="">-- Selecione --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Observação</label>
+            <textarea id="manutencaoObservacao" rows="2"
+                placeholder="Motivo da manutenção, etc."></textarea>
+        </div>
+
+        <div style="display:flex;gap:1rem;justify-content:flex-end;">
+            <button class="btn btn-secondary" onclick="fecharModais()">Cancelar</button>
+            <button class="btn btn-warning" onclick="confirmarManutencaoLote()"
+                style="width:auto;">🔧 Confirmar</button>
+        </div>
+    </div>
+</div>
+<script src="js/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
+<script>
+    const token   = localStorage.getItem("token");
+    const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
+    if (!token) window.location.href = "login.html";
+
+    const nome = usuario.nome || "Usuário";
+    document.getElementById("sidebarNome").textContent = nome;
+    document.getElementById("avatarLetra").textContent = nome.charAt(0).toUpperCase();
+    const perfis = { admin:"Administrador", operador:"Operador", visitante:"Visitante" };
+    document.getElementById("sidebarPerfil").textContent = perfis[usuario.perfil] || usuario.perfil;
+    if (usuario.perfil !== "admin") {
+        const linkTecnicos = document.getElementById("linkTecnicos");
+        if (linkTecnicos) linkTecnicos.style.display = "none";
+    }
+    // Mostra o nome da empresa no topbar
+document.getElementById("nomeEmpresa").textContent =
+    "🏢 " + (usuario.empresa_nome || "");
+    // ============================================================
+    // Troca de empresa (só Super Admin)
+    // ============================================================
+    const empresasDisponiveis = [
+        { id: 1, nome: "Matriz" },
+        { id: 2, nome: "Filial" }
+    ];
+
+    if (usuario.acesso_todas) {
+        document.getElementById("setaEmpresa").style.display = "inline";
+        montarDropdownEmpresa();
+    } else {
+        document.getElementById("btnEmpresa").style.cursor = "default";
+    }
+
+    function montarDropdownEmpresa() {
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.innerHTML = empresasDisponiveis.map(e => `
+            <div onclick="trocarEmpresa(${e.id})" style="
+                padding:0.6rem 1rem;cursor:pointer;font-size:0.85rem;
+                color:#e2e8f0;"
+                onmouseover="this.style.background='rgba(79,142,247,0.1)'"
+                onmouseout="this.style.background='transparent'">
+                ${e.nome}
+            </div>
+        `).join("");
+    }
+
+    function toggleDropdownEmpresa() {
+        if (!usuario.acesso_todas) return;
+        const dropdown = document.getElementById("dropdownEmpresa");
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    }
+
+    async function trocarEmpresa(idEmpresa) {
+        if (idEmpresa === usuario.id_empresa) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+            return;
+        }
+        try {
+            const resposta = await fetch(`${API_URL}/api/auth/trocar-empresa`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ id_empresa: idEmpresa })
+            });
+            const dados = await resposta.json();
+            if (resposta.ok) {
+                localStorage.setItem("token", dados.token);
+                localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+                window.location.reload();
+            } else {
+                alert("Erro ao trocar de empresa: " + dados.erro);
+            }
+        } catch (e) {
+            alert("Erro ao conectar com o servidor.");
+        }
+    }
+
+    // Fecha o dropdown se clicar fora dele
+    document.addEventListener("click", (e) => {
+        const seletor = document.getElementById("seletorEmpresa");
+        if (seletor && !seletor.contains(e.target)) {
+            document.getElementById("dropdownEmpresa").style.display = "none";
+        }
+    });
+
+    if (usuario.perfil === "visitante") {
+        document.getElementById("botoesAcao").style.display = "none";
+    }
+
+    let todasMovimentacoes = [];
+    let filtrosVisiveis    = false;
+
+    function toggleFiltros() {
+        filtrosVisiveis = !filtrosVisiveis;
+        document.getElementById("painelFiltros").style.display =
+            filtrosVisiveis ? "block" : "none";
+        document.getElementById("iconeFiltro").textContent =
+            filtrosVisiveis ? "▲ Recolher" : "▼ Expandir";
+    }
+
+    async function carregarMovimentacoes() {
+        try {
+            const r = await fetch(`${API_URL}/api/movimentacoes/`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            todasMovimentacoes = await r.json();
+            document.getElementById("totalLabel").textContent =
+                `${todasMovimentacoes.length} registros`;
+            aplicarFiltros();
+        } catch (e) { console.error(e); }
+    }
+
+    // ============================================================
+    // Aplica todos os filtros nas movimentações
+    // ============================================================
+    function aplicarFiltros() {
+        const busca      = document.getElementById("filtroBusca").value.toLowerCase();
+        const tipo       = document.getElementById("filtroTipo").value;
+        const dataInicio = document.getElementById("filtroDataInicio").value;
+        const dataFim    = document.getElementById("filtroDataFim").value;
+        const ordem      = document.getElementById("filtroOrdem").value;
+
+        let resultado = [...todasMovimentacoes];
+
+        // Filtro por texto
+        if (busca) {
+            resultado = resultado.filter(m =>
+                (m.equipamento_nome && m.equipamento_nome.toLowerCase().includes(busca)) ||
+                m.responsavel.toLowerCase().includes(busca)
+            );
+        }
+
+        // Filtro por tipo (saída/devolução)
+        if (tipo) {
+            resultado = resultado.filter(m => m.tipo === tipo);
+        }
+
+        // Filtro por data inicial
+        if (dataInicio) {
+            resultado = resultado.filter(m =>
+                new Date(m.criado_em) >= new Date(dataInicio + "T00:00:00")
+            );
+        }
+
+        // Filtro por data final
+        if (dataFim) {
+            resultado = resultado.filter(m =>
+                new Date(m.criado_em) <= new Date(dataFim + "T23:59:59")
+            );
+        }
+
+        // Ordenação
+        resultado.sort((a, b) => {
+            switch (ordem) {
+                case "recente":
+                    return new Date(b.criado_em) - new Date(a.criado_em);
+                case "antigo":
+                    return new Date(a.criado_em) - new Date(b.criado_em);
+                case "equipamento":
+                    return (a.equipamento_nome || "").localeCompare(b.equipamento_nome || "");
+                case "responsavel":
+                    return a.responsavel.localeCompare(b.responsavel);
+                default:
+                    return 0;
+            }
+        });
+
+        document.getElementById("contadorResultados").textContent =
+            `${resultado.length} movimentação(ões) encontrada(s)`;
+
+        renderizarTabela(resultado);
+    }
+
+    // Atalho para filtrar por período (últimos N dias)
+    function filtrarPeriodo(dias) {
+        const hoje  = new Date();
+        const inicio = new Date();
+        inicio.setDate(hoje.getDate() - dias);
+
+        // Preenche os campos de data automaticamente
+        document.getElementById("filtroDataInicio").value =
+            inicio.toISOString().split("T")[0];
+        document.getElementById("filtroDataFim").value =
+            hoje.toISOString().split("T")[0];
+
+        // Abre o painel de filtros se estiver fechado
+        if (!filtrosVisiveis) toggleFiltros();
+
+        aplicarFiltros();
+    }
+
+    function limparFiltros() {
+        document.getElementById("filtroBusca").value     = "";
+        document.getElementById("filtroTipo").value      = "";
+        document.getElementById("filtroDataInicio").value= "";
+        document.getElementById("filtroDataFim").value   = "";
+        document.getElementById("filtroOrdem").value     = "recente";
+        aplicarFiltros();
+    }
+
+    function renderizarTabela(movimentacoes) {
+        const tbody = document.getElementById("tabelaMovimentacoes");
+
+        if (movimentacoes.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7"
+                style="text-align:center;color:#8892a4;padding:2rem;">
+                Nenhuma movimentação encontrada para os filtros selecionados
+                </td></tr>`;
+            return;
+        }
+
+        const BADGE_TIPO = {
+            saida:       { classe: "badge-vermelho", texto: "📤 Saída" },
+            devolucao:   { classe: "badge-verde",     texto: "📥 Devolução" },
+            manutencao:  { classe: "badge-amarelo",   texto: "🔧 Manutenção" }
+        };
+
+        tbody.innerHTML = movimentacoes.map(m => `
+            <tr>
+                <td>
+                    <span class="badge ${BADGE_TIPO[m.tipo]?.classe || 'badge-cinza'}">
+                        ${BADGE_TIPO[m.tipo]?.texto || m.tipo}
+                    </span>
+                </td>
+                <td><strong>${m.equipamento_nome || "-"}</strong></td>
+                <td>${m.quantidade}</td>
+                <td>${m.responsavel}</td>
+                <td style="color:#8892a4;">${m.observacao || "-"}</td>
+                <td style="color:#8892a4;">${m.data_devolucao_prevista
+                    ? new Date(m.data_devolucao_prevista).toLocaleDateString('pt-BR')
+                    : "-"}</td>
+                <td style="color:#8892a4;">
+                    ${new Date(m.criado_em).toLocaleDateString('pt-BR')}
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    // Mesmo combobox com busca, agora pra escolher o técnico responsável
+    // (evita nome digitado de forma inconsistente, tipo "DIEGO" x "DIEGO ")
+    const opcoesChoicesTecnico = {
+        searchEnabled: true,
+        searchPlaceholderValue: "Buscar técnico...",
+        noResultsText: "Nenhum técnico encontrado",
+        noChoicesText: "Nenhum técnico cadastrado",
+        itemSelectText: "",
+        shouldSort: false,
+        fuseOptions: { threshold: 0, ignoreLocation: true, minMatchCharLength: 1 }
+    };
+    const choicesTecnicoSaida       = new Choices("#saidaResponsavel", opcoesChoicesTecnico);
+    const choicesTecnicoDev         = new Choices("#devResponsavel", opcoesChoicesTecnico);
+    const choicesTecnicoManutencao  = new Choices("#manutencaoResponsavel", opcoesChoicesTecnico);
+
+    async function carregarTecnicos() {
+        const r = await fetch(`${API_URL}/api/tecnicos/`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const tecnicos = await r.json();
+
+        const itens = [
+            { value: "", label: "-- Selecione --", placeholder: true },
+            ...tecnicos
+                .filter(t => t.ativo)
+                .map(t => ({ value: t.nome, label: t.nome }))
+        ];
+        choicesTecnicoSaida.setChoices(itens, "value", "label", true);
+        choicesTecnicoSaida.setChoiceByValue("");
+        choicesTecnicoDev.setChoices(itens, "value", "label", true);
+        choicesTecnicoDev.setChoiceByValue("");
+        choicesTecnicoManutencao.setChoices(itens, "value", "label", true);
+        choicesTecnicoManutencao.setChoiceByValue("");
+    }
+
+    // ============================================================
+    // Lista de itens (equipamentos e/ou unidades por código de barras)
+    // dos modais de Saída e Devolução - permite registrar vários de
+    // uma vez, em vez de um equipamento por operação.
+    // ============================================================
+    let equipamentosSemUnidade = []; // equipamentos controlados só por quantidade
+    let todasUnidadesMov       = []; // todas as unidades (código de barras) da empresa
+
+    async function carregarDadosParaLista() {
+        const [rEq, rUn] = await Promise.all([
+            fetch(`${API_URL}/api/equipamentos/`, { headers: { "Authorization": `Bearer ${token}` } }),
+            fetch(`${API_URL}/api/unidades/`,     { headers: { "Authorization": `Bearer ${token}` } })
+        ]);
+        const equipamentos = await rEq.json();
+        todasUnidadesMov = await rUn.json();
+
+        const idsComUnidade = new Set(todasUnidadesMov.map(u => u.id_equipamento));
+        equipamentosSemUnidade = equipamentos.filter(e => !idsComUnidade.has(e.id));
+    }
+
+    function adicionarLinhaItem(containerId, tipoOperacao) {
+        const container = document.getElementById(containerId);
+        const linha = document.createElement("div");
+        linha.className = "linha-item-mov";
+        linha.dataset.operacao = tipoOperacao;
+        linha.dataset.tipo = "";
+        linha.innerHTML = `
+            <div style="position:relative;flex:1;">
+                <input type="text" class="input-busca-item"
+                    placeholder="-- Selecione ou escaneie um código de barras --"
+                    oninput="buscarSugestoesItem(this)"
+                    onfocus="buscarSugestoesItem(this)"
+                    onkeypress="verificarEnterItem(event, this)"
+                    onclick="limparSelecaoItem(this)">
+                <span class="seta-item-mov">▾</span>
+                <div class="sugestoes-item"></div>
+            </div>
+            <input type="number" class="input-quantidade-item" value="1" min="1" title="Quantidade">
+            ${tipoOperacao === "devolucao" ? `
+                <select class="select-condicao-item" style="display:none;" title="Condição da devolução">
+                    <option value="boa">✅ Boa</option>
+                    <option value="manutencao">🔧 Manutenção</option>
+                    <option value="inutilizavel">⚠️ Perdido</option>
+                </select>
+            ` : ""}
+            <button type="button" class="btn-remover-linha"
+                onclick="removerLinhaItem(this)" title="Remover">✕</button>
+        `;
+        container.appendChild(linha);
+    }
+
+    function removerLinhaItem(botao) {
+        const linha     = botao.closest(".linha-item-mov");
+        const container = linha.parentElement;
+        if (container.children.length <= 1) return; // sempre mantém pelo menos 1 linha
+        linha.remove();
+    }
+
+    function resetarListaItens(containerId, tipoOperacao) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = "";
+        adicionarLinhaItem(containerId, tipoOperacao);
+    }
+
+    // Monta as sugestões (equipamentos por nome + unidades por código/nome)
+    // conforme o usuário digita - e também com o campo vazio (ao focar/clicar),
+    // pra funcionar como um "selecione da lista" e não só um campo de texto livre
+    // Matriz e Filial à parte: cada modo (saída/devolução/manutenção) só
+    // deixa escolher unidades num certo status - não faz sentido, por
+    // exemplo, escanear uma unidade que já está em manutenção pra sair.
+    function statusValidosParaOperacao(tipoOperacao) {
+        if (tipoOperacao === "saida")      return ["disponivel"];
+        if (tipoOperacao === "devolucao")  return ["em_uso", "manutencao"];
+        if (tipoOperacao === "manutencao") return ["disponivel", "em_uso"];
+        return [];
+    }
+
+    function buscarSugestoesItem(inputEl) {
+        if (inputEl.readOnly) return; // já tem algo selecionado, limparSelecaoItem cuida de reabrir
+
+        const termo = inputEl.value.trim().toLowerCase();
+        const linha = inputEl.closest(".linha-item-mov");
+        const caixa = linha.querySelector(".sugestoes-item");
+        const tipoOperacao = linha.dataset.operacao;
+        const statusValidos = statusValidosParaOperacao(tipoOperacao);
+
+        // Equipamentos por quantidade que batem com o termo (ou todos, se
+        // o campo estiver vazio - pra dar pra navegar como um select comum)
+        const sugEquip = equipamentosSemUnidade
+            .filter(e => (!termo || e.nome.toLowerCase().includes(termo)) &&
+                (!["saida", "manutencao"].includes(tipoOperacao) || e.quantidade > 0) &&
+                (tipoOperacao !== "manutencao" || e.status !== "manutencao"))
+            .sort((a, b) => a.nome.localeCompare(b.nome))
+            .slice(0, termo ? 8 : 30)
+            .map(e => ({
+                tipo: "equipamento", id_equipamento: e.id, quantidade: e.quantidade,
+                label: `📦 ${e.nome} (${e.quantidade} disponíveis)`
+            }));
+
+        // Unidades por código de barras só aparecem depois de digitar algo
+        // (escanear ou buscar por código/nome) - listar todas de uma vez
+        // não ajudaria em nada
+        let sugUnidades = [];
+        if (termo) {
+            const vistos = new Set();
+            sugUnidades = todasUnidadesMov
+                .filter(u => statusValidos.includes(u.status) &&
+                    (u.codigo_barras.toLowerCase().includes(termo) ||
+                     (u.equipamento_nome || "").toLowerCase().includes(termo)))
+                .filter(u => {
+                    if (vistos.has(u.codigo_barras)) return false;
+                    vistos.add(u.codigo_barras);
+                    return true;
+                })
+                .slice(0, 8)
+                .map(u => ({
+                    tipo: "unidade", codigo_barras: u.codigo_barras, id_equipamento: u.id_equipamento,
+                    label: `🏷️ ${u.equipamento_nome} — ${u.codigo_barras}`
+                }));
+        }
+
+        const sugestoes = [...sugEquip, ...sugUnidades].slice(0, termo ? 10 : 30);
+        linha._sugestoesAtuais = sugestoes;
+
+        caixa.style.display = "block";
+
+        if (sugestoes.length === 0) {
+            caixa.innerHTML = `<div class="sugestao-vazia">Nenhum resultado</div>`;
+            return;
+        }
+
+        const dica = !termo
+            ? `<div class="sugestao-vazia">Digite pra buscar ou escaneie um código de barras</div>`
+            : "";
+
+        caixa.innerHTML = dica + sugestoes.map((s, i) => `
+            <div class="sugestao-item" onclick="selecionarSugestaoItem(this, ${i})">${s.label}</div>
+        `).join("");
+    }
+
+    function selecionarSugestaoItem(el, indice) {
+        const linha = el.closest(".linha-item-mov");
+        const sugestao = (linha._sugestoesAtuais || [])[indice];
+        if (!sugestao) return;
+        aplicarSelecaoItem(linha, sugestao);
+    }
+
+    // Enter no campo tenta o fluxo rápido do leitor físico de código de
+    // barras: se bater um código exato, seleciona na hora e já abre uma
+    // nova linha pronta pra próxima leitura
+    function verificarEnterItem(event, inputEl) {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+
+        const linha = inputEl.closest(".linha-item-mov");
+        const tipoOperacao = linha.dataset.operacao;
+        const valor = inputEl.value.trim();
+        if (!valor) return;
+
+        const statusValidos = statusValidosParaOperacao(tipoOperacao);
+        const unidadeExata = todasUnidadesMov.find(u =>
+            u.codigo_barras === valor && statusValidos.includes(u.status));
+
+        if (unidadeExata) {
+            aplicarSelecaoItem(linha, {
+                tipo: "unidade", codigo_barras: unidadeExata.codigo_barras,
+                id_equipamento: unidadeExata.id_equipamento,
+                label: `🏷️ ${unidadeExata.equipamento_nome} — ${unidadeExata.codigo_barras}`
+            });
+            adicionarLinhaItem(linha.parentElement.id, tipoOperacao);
+            return;
+        }
+
+        if (linha._sugestoesAtuais && linha._sugestoesAtuais.length === 1) {
+            aplicarSelecaoItem(linha, linha._sugestoesAtuais[0]);
+        }
+    }
+
+    function aplicarSelecaoItem(linha, sugestao) {
+        const input       = linha.querySelector(".input-busca-item");
+        const qtd          = linha.querySelector(".input-quantidade-item");
+        const condicaoSel  = linha.querySelector(".select-condicao-item");
+
+        linha.dataset.tipo          = sugestao.tipo;
+        linha.dataset.idEquipamento = sugestao.id_equipamento || "";
+        linha.dataset.codigoBarras  = sugestao.codigo_barras  || "";
+
+        input.value    = sugestao.label;
+        input.readOnly = true;
+        linha.querySelector(".sugestoes-item").style.display = "none";
+        linha.querySelector(".sugestoes-item").innerHTML = "";
+
+        if (sugestao.tipo === "unidade") {
+            qtd.value = "1";
+            qtd.disabled = true;
+            if (condicaoSel) condicaoSel.style.display = "inline-block";
+        } else {
+            // Manutenção sempre manda o equipamento inteiro pra lá - a
+            // quantidade aqui é só informativa, não dá pra escolher parte
+            if (linha.dataset.operacao === "manutencao") {
+                qtd.value = String(sugestao.quantidade ?? qtd.value);
+                qtd.disabled = true;
+            } else {
+                qtd.disabled = false;
+            }
+            if (condicaoSel) condicaoSel.style.display = "none";
+        }
+    }
+
+    // Clicar num campo já preenchido limpa a seleção pra buscar de novo
+    function limparSelecaoItem(inputEl) {
+        if (!inputEl.readOnly) return;
+        const linha = inputEl.closest(".linha-item-mov");
+        linha.dataset.tipo = "";
+        linha.dataset.idEquipamento = "";
+        linha.dataset.codigoBarras  = "";
+        inputEl.value    = "";
+        inputEl.readOnly = false;
+
+        const qtd = linha.querySelector(".input-quantidade-item");
+        qtd.disabled = false;
+        qtd.value    = "1";
+
+        const condicaoSel = linha.querySelector(".select-condicao-item");
+        if (condicaoSel) condicaoSel.style.display = "none";
+
+        inputEl.focus();
+        buscarSugestoesItem(inputEl); // reabre a lista na hora, já sem estar readonly
+    }
+
+    // Fecha qualquer lista de sugestões aberta ao clicar fora dela
+    document.addEventListener("click", (e) => {
+        document.querySelectorAll(".sugestoes-item").forEach(caixa => {
+            const linha = caixa.closest(".linha-item-mov");
+            if (linha && !linha.contains(e.target)) caixa.style.display = "none";
+        });
+    });
+
+    // Lê as linhas preenchidas de uma lista e monta o array de itens
+    // no formato esperado pelos endpoints de saída/devolução em lote
+    function coletarItensMov(containerId) {
+        const linhas = Array.from(document.querySelectorAll(`#${containerId} .linha-item-mov`));
+        const itens = [];
+
+        for (const linha of linhas) {
+            const tipo = linha.dataset.tipo;
+            if (!tipo) continue; // linha vazia, ignora
+
+            if (tipo === "equipamento") {
+                const quantidade = parseInt(linha.querySelector(".input-quantidade-item").value) || 0;
+                if (quantidade < 1) continue;
+                itens.push({
+                    tipo: "equipamento",
+                    id_equipamento: parseInt(linha.dataset.idEquipamento),
+                    quantidade
+                });
+            } else if (tipo === "unidade") {
+                const item = { tipo: "unidade", codigo_barras: linha.dataset.codigoBarras };
+                if (linha.dataset.operacao === "devolucao") {
+                    const condicaoSel = linha.querySelector(".select-condicao-item");
+                    item.condicao = condicaoSel ? condicaoSel.value : "boa";
+                }
+                itens.push(item);
+            }
+        }
+
+        return itens;
+    }
+
+    async function abrirModalSaida() {
+        await Promise.all([carregarDadosParaLista(), carregarTecnicos()]);
+        resetarListaItens("saidaItensLista", "saida");
+        document.getElementById("modalSaida").classList.add("ativo");
+    }
+
+    async function abrirModalDevolucao() {
+        await Promise.all([carregarDadosParaLista(), carregarTecnicos()]);
+        resetarListaItens("devItensLista", "devolucao");
+        document.getElementById("modalDevolucao").classList.add("ativo");
+    }
+
+    async function abrirModalManutencaoLote() {
+        await Promise.all([carregarDadosParaLista(), carregarTecnicos()]);
+        resetarListaItens("manutencaoItensLista", "manutencao");
+        document.getElementById("manutencaoObservacao").value = "";
+        document.getElementById("modalManutencaoLote").classList.add("ativo");
+    }
+
+    async function confirmarManutencaoLote() {
+        const responsavel = document.getElementById("manutencaoResponsavel").value;
+        const itens        = coletarItensMov("manutencaoItensLista");
+
+        if (!responsavel) {
+            mostrarErro("Responsável é obrigatório!");
+            return;
+        }
+        if (itens.length === 0) {
+            mostrarErro("Adicione ao menos um equipamento!");
+            return;
+        }
+
+        const dados = {
+            responsavel,
+            observacao: document.getElementById("manutencaoObservacao").value,
+            itens
+        };
+
+        try {
+            const r = await fetch(`${API_URL}/api/equipamentos/manutencao-lote`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(dados)
+            });
+            const resultado = await r.json();
+            if (r.ok) {
+                mostrarSucesso(resultado.mensagem);
+                fecharModais();
+                carregarMovimentacoes();
+            } else mostrarErro(resultado.erro);
+        } catch (e) { mostrarErro("Erro ao enviar equipamentos para manutenção"); }
+    }
+
+    function fecharModais() {
+        document.getElementById("modalSaida").classList.remove("ativo");
+        document.getElementById("modalDevolucao").classList.remove("ativo");
+        document.getElementById("modalManutencaoLote").classList.remove("ativo");
+    }
+
+    async function registrarSaida() {
+        const responsavel = document.getElementById("saidaResponsavel").value;
+        const itens        = coletarItensMov("saidaItensLista");
+
+        if (!responsavel) {
+            mostrarErro("Responsável é obrigatório!");
+            return;
+        }
+        if (itens.length === 0) {
+            mostrarErro("Adicione ao menos um equipamento!");
+            return;
+        }
+
+        const dados = {
+            responsavel,
+            observacao: document.getElementById("saidaObservacao").value,
+            itens
+        };
+
+        try {
+            const r = await fetch(`${API_URL}/api/movimentacoes/saida-lote`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(dados)
+            });
+            const resultado = await r.json();
+            if (r.ok) {
+                mostrarSucesso(resultado.mensagem);
+                fecharModais();
+                carregarMovimentacoes();
+            } else mostrarErro(resultado.erro);
+        } catch (e) { mostrarErro("Erro ao registrar saída"); }
+    }
+
+    async function registrarDevolucao() {
+        const responsavel = document.getElementById("devResponsavel").value;
+        const itens        = coletarItensMov("devItensLista");
+
+        if (!responsavel) {
+            mostrarErro("Responsável é obrigatório!");
+            return;
+        }
+        if (itens.length === 0) {
+            mostrarErro("Adicione ao menos um equipamento!");
+            return;
+        }
+
+        const dados = {
+            responsavel,
+            observacao: document.getElementById("devObservacao").value,
+            itens
+        };
+
+        try {
+            const r = await fetch(`${API_URL}/api/movimentacoes/devolucao-lote`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(dados)
+            });
+            const resultado = await r.json();
+            if (r.ok) {
+                mostrarSucesso(resultado.mensagem);
+                fecharModais();
+                carregarMovimentacoes();
+            } else mostrarErro(resultado.erro);
+        } catch (e) { mostrarErro("Erro ao registrar devolução"); }
+    }
+
+    function mostrarSucesso(msg) {
+        const el = document.getElementById("msgSucesso");
+        el.textContent = "✅ " + msg;
+        el.style.display = "flex";
+        setTimeout(() => el.style.display = "none", 3000);
+    }
+
+    function mostrarErro(msg) {
+        const el = document.getElementById("msgErro");
+        el.textContent = "❌ " + msg;
+        el.style.display = "flex";
+        setTimeout(() => el.style.display = "none", 4000);
+    }
+
+    function sair() {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+        window.location.href = "login.html";
+    }
+
+    carregarMovimentacoes();
+</script>
+
+</body>
+</html>
